@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Agent Dashboard - Fixed</title>
+    <title>Daksh's AI Agent - V3</title>
     <style>
         body { background: #0d1117; color: #c9d1d9; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; padding: 20px; }
         .container { width: 100%; max-width: 500px; background: #161b22; padding: 20px; border-radius: 12px; border: 1px solid #30363d; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
@@ -18,9 +18,9 @@
 <body>
 
 <div class="container">
-    <h1>🚀 AI Site Builder</h1>
+    <h1>🚀 AI Site Builder (v3)</h1>
     <div class="settings">
-        <p style="margin-top:0; font-size: 12px; color: #8b949e;">🔑 Enter your keys and tap Save:</p>
+        <p style="margin-top:0; font-size: 12px; color: #8b949e;">🔑 Enter keys and tap Save:</p>
         <input type="password" id="geminiInput" placeholder="Gemini API Key">
         <input type="password" id="ghInput" placeholder="GitHub Token">
         <button style="background: #1f6feb; padding: 10px;" onclick="saveKeys()">Save Keys Locally</button>
@@ -39,7 +39,7 @@
     function saveKeys() {
         localStorage.setItem("geminiKey", document.getElementById('geminiInput').value.trim());
         localStorage.setItem("ghToken", document.getElementById('ghInput').value.trim());
-        alert("Keys saved!");
+        alert("Keys saved to your phone!");
     }
 
     async function runAgent() {
@@ -52,21 +52,22 @@
 
         if(!prompt || !GEMINI_KEY || !GH_TOKEN) return alert("Enter prompt and save keys!");
 
-        status.innerText = "🧠 AI is thinking...";
+        status.innerText = "🧠 AI is thinking (using Gemini 3 Flash)...";
 
         try {
-            // UPDATED TO v1 STABLE ENDPOINT
-            const aiResponse = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`, {
+            // UPDATED MODEL NAME TO gemini-3-flash
+            const aiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash:generateContent?key=${GEMINI_KEY}`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ 
-                    contents: [{ parts: [{ text: "Write the full HTML code for a single webpage based on: " + prompt + ". Only output the raw HTML, no markdown." }] }] 
+                    contents: [{ parts: [{ text: "Write the full HTML code for a single webpage based on: " + prompt + ". Only output the raw HTML code, no markdown." }] }] 
                 })
             });
             
             const data = await aiResponse.json();
 
-            if (data.error) throw new Error("Gemini API Error: " + data.error.message);
+            if (data.error) throw new Error("Gemini Error: " + data.error.message);
+            if (!data.candidates) throw new Error("No response from AI. Check your API key.");
             
             let newCode = data.candidates[0].content.parts[0].text;
             newCode = newCode.replace(/```html|```/gi, "").trim();
@@ -82,19 +83,20 @@
                 method: "PUT",
                 headers: { "Authorization": `token ${GH_TOKEN}`, "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    message: "AI Update",
+                    message: "AI Agent Update",
                     content: btoa(unescape(encodeURIComponent(newCode))),
                     sha: fileData.sha
                 })
             });
 
             if(updateFile.ok) {
-                status.innerText = "✅ DONE! Refresh in 30 seconds.";
+                status.innerText = "✅ DONE! Your new site is deploying. Refresh in 30s.";
             } else {
-                status.innerText = "❌ GitHub Push Failed.";
+                const err = await updateFile.json();
+                throw new Error("GitHub Error: " + err.message);
             }
         } catch (e) {
-            status.innerText = "❌ Error: " + e.message;
+            status.innerText = "❌ " + e.message;
         }
     }
 </script>
