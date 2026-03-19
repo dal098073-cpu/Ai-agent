@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Daksh's AI Agent - V3</title>
+    <title>Daksh's AI Agent - V4 (Smart Mode)</title>
     <style>
         body { background: #0d1117; color: #c9d1d9; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; padding: 20px; }
         .container { width: 100%; max-width: 500px; background: #161b22; padding: 20px; border-radius: 12px; border: 1px solid #30363d; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
@@ -12,13 +12,13 @@
         input { width: 100%; padding: 10px; margin-bottom: 10px; background: #0d1117; color: #fff; border: 1px solid #30363d; border-radius: 5px; box-sizing: border-box;}
         button { width: 100%; padding: 15px; background: #238636; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-bottom: 10px; }
         .settings { background: #0d1117; padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #30363d;}
-        #status { font-size: 14px; text-align: center; color: #8b949e; margin-top: 10px; word-wrap: break-word;}
+        #status { font-size: 14px; text-align: center; color: #8b949e; margin-top: 10px; word-wrap: break-word; line-height: 1.5;}
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>🚀 AI Site Builder (v3)</h1>
+    <h1>🚀 AI Site Builder (V4)</h1>
     <div class="settings">
         <p style="margin-top:0; font-size: 12px; color: #8b949e;">🔑 Enter keys and tap Save:</p>
         <input type="password" id="geminiInput" placeholder="Gemini API Key">
@@ -52,11 +52,23 @@
 
         if(!prompt || !GEMINI_KEY || !GH_TOKEN) return alert("Enter prompt and save keys!");
 
-        status.innerText = "🧠 AI is thinking (using Gemini 3 Flash)...";
+        status.innerText = "🔍 Checking which Brain (Model) to use...";
 
         try {
-            // UPDATED MODEL NAME TO gemini-3-flash
-            const aiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash:generateContent?key=${GEMINI_KEY}`, {
+            // STEP 1: AUTO-DETECT THE BEST MODEL
+            const listResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${GEMINI_KEY}`);
+            const listData = await listResponse.json();
+            
+            if (listData.error) throw new Error("API Key Error: " + listData.error.message);
+
+            // Find the first model that supports generating content
+            const bestModel = listData.models.find(m => m.supportedGenerationMethods.includes("generateContent") && m.name.includes("flash"));
+            const modelName = bestModel ? bestModel.name : "models/gemini-1.5-flash"; // Fallback
+
+            status.innerText = "🧠 Using: " + modelName + "... Thinking...";
+
+            // STEP 2: GENERATE THE CODE
+            const aiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/${modelName}:generateContent?key=${GEMINI_KEY}`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ 
@@ -65,15 +77,14 @@
             });
             
             const data = await aiResponse.json();
-
             if (data.error) throw new Error("Gemini Error: " + data.error.message);
-            if (!data.candidates) throw new Error("No response from AI. Check your API key.");
             
             let newCode = data.candidates[0].content.parts[0].text;
             newCode = newCode.replace(/```html|```/gi, "").trim();
 
             status.innerText = "💾 Pushing to GitHub...";
 
+            // STEP 3: PUSH TO GITHUB
             const getFile = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/index.html`, {
                 headers: { "Authorization": `token ${GH_TOKEN}` }
             });
@@ -83,17 +94,16 @@
                 method: "PUT",
                 headers: { "Authorization": `token ${GH_TOKEN}`, "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    message: "AI Agent Update",
+                    message: "AI Update",
                     content: btoa(unescape(encodeURIComponent(newCode))),
                     sha: fileData.sha
                 })
             });
 
             if(updateFile.ok) {
-                status.innerText = "✅ DONE! Your new site is deploying. Refresh in 30s.";
+                status.innerText = "✅ SUCCESS! Refresh your main link in 30 seconds.";
             } else {
-                const err = await updateFile.json();
-                throw new Error("GitHub Error: " + err.message);
+                throw new Error("GitHub Push Failed.");
             }
         } catch (e) {
             status.innerText = "❌ " + e.message;
