@@ -3,31 +3,49 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Daksh's AI Agent - V4 (Smart Mode)</title>
+    <title>Daksh's Pro Builder - V5</title>
     <style>
         body { background: #0d1117; color: #c9d1d9; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; padding: 20px; }
-        .container { width: 100%; max-width: 500px; background: #161b22; padding: 20px; border-radius: 12px; border: 1px solid #30363d; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        h1 { color: #58a6ff; font-size: 24px; text-align: center; }
-        textarea { width: 100%; height: 120px; background: #0d1117; color: #fff; border: 1px solid #30363d; border-radius: 8px; padding: 10px; box-sizing: border-box; font-size: 16px; margin-bottom: 15px; }
-        input { width: 100%; padding: 10px; margin-bottom: 10px; background: #0d1117; color: #fff; border: 1px solid #30363d; border-radius: 5px; box-sizing: border-box;}
-        button { width: 100%; padding: 15px; background: #238636; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-bottom: 10px; }
-        .settings { background: #0d1117; padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #30363d;}
-        #status { font-size: 14px; text-align: center; color: #8b949e; margin-top: 10px; word-wrap: break-word; line-height: 1.5;}
+        .container { width: 100%; max-width: 550px; background: #161b22; padding: 25px; border-radius: 12px; border: 1px solid #30363d; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        h1 { color: #58a6ff; font-size: 24px; text-align: center; margin-bottom: 5px;}
+        p.subtitle { text-align: center; color: #8b949e; font-size: 14px; margin-bottom: 20px; }
+        label { font-size: 14px; font-weight: bold; color: #58a6ff; margin-bottom: 5px; display: block; }
+        input, textarea { width: 100%; padding: 12px; margin-bottom: 15px; background: #0d1117; color: #fff; border: 1px solid #30363d; border-radius: 5px; box-sizing: border-box; font-size: 15px;}
+        textarea { height: 140px; }
+        button { width: 100%; padding: 15px; background: #238636; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-bottom: 10px; font-size: 16px; transition: 0.2s;}
+        button:hover { background: #2ea043; }
+        .settings { background: #010409; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #30363d;}
+        #status { font-size: 15px; text-align: center; color: #e6edf3; margin-top: 15px; word-wrap: break-word; line-height: 1.5; padding: 10px; border-radius: 5px;}
+        .url-box { margin-top: 15px; padding: 15px; background: #1f6feb; color: white; border-radius: 8px; text-align: center; display: none; }
+        .url-box a { color: #fff; font-weight: bold; text-decoration: underline; word-break: break-all; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>🚀 AI Site Builder (V4)</h1>
+    <h1>⚡ Pro AI Builder</h1>
+    <p class="subtitle">Multi-Page & High Detail Generator</p>
+
     <div class="settings">
-        <p style="margin-top:0; font-size: 12px; color: #8b949e;">🔑 Enter keys and tap Save:</p>
+        <label>🔑 API Keys</label>
         <input type="password" id="geminiInput" placeholder="Gemini API Key">
         <input type="password" id="ghInput" placeholder="GitHub Token">
-        <button style="background: #1f6feb; padding: 10px;" onclick="saveKeys()">Save Keys Locally</button>
+        <button style="background: #1f6feb; padding: 10px; font-size: 14px;" onclick="saveKeys()">Save Keys Locally</button>
     </div>
-    <textarea id="prompt" placeholder="Tell the AI what to build..."></textarea>
-    <button onclick="runAgent()">GENERATE & DEPLOY</button>
+
+    <label>📄 Project Name (Creates your custom URL)</label>
+    <input type="text" id="filename" placeholder="e.g., gym-site, admin-panel, portfolio">
+
+    <label>💡 Detailed Prompt</label>
+    <textarea id="prompt" placeholder="Describe the website in detail... (e.g. 'Build an admin panel with a dark theme, sidebar, and chart graphics')"></textarea>
+    
+    <button onclick="runAgent()">🚀 BUILD & DEPLOY NEW SITE</button>
+    
     <div id="status">System Standby...</div>
+    <div id="success-link" class="url-box">
+        Site Created! Wait 45s, then click:<br>
+        <a id="live-url" href="#" target="_blank">Link will appear here</a>
+    </div>
 </div>
 
 <script>
@@ -39,74 +57,98 @@
     function saveKeys() {
         localStorage.setItem("geminiKey", document.getElementById('geminiInput').value.trim());
         localStorage.setItem("ghToken", document.getElementById('ghInput').value.trim());
-        alert("Keys saved to your phone!");
+        alert("Keys saved!");
     }
 
     async function runAgent() {
+        let filename = document.getElementById('filename').value.trim().replace(/\s+/g, '-').toLowerCase();
         const prompt = document.getElementById('prompt').value;
         const status = document.getElementById('status');
+        const successBox = document.getElementById('success-link');
+        const liveUrl = document.getElementById('live-url');
+        
         const GEMINI_KEY = localStorage.getItem("geminiKey");
         const GH_TOKEN = localStorage.getItem("ghToken");
         const REPO_OWNER = "dal098073-cpu"; 
         const REPO_NAME = "Ai-agent";       
 
-        if(!prompt || !GEMINI_KEY || !GH_TOKEN) return alert("Enter prompt and save keys!");
+        if(!filename) return alert("Please enter a Project Name!");
+        if(!prompt || !GEMINI_KEY || !GH_TOKEN) return alert("Enter prompt and keys!");
 
-        status.innerText = "🔍 Checking which Brain (Model) to use...";
+        // Ensure it ends in .html
+        if (!filename.endsWith('.html')) filename += '.html';
+
+        successBox.style.display = "none";
+        status.innerText = `🔍 Checking AI Brains...`;
+        status.style.background = "#21262d";
 
         try {
-            // STEP 1: AUTO-DETECT THE BEST MODEL
+            // Find best model
             const listResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${GEMINI_KEY}`);
             const listData = await listResponse.json();
-            
-            if (listData.error) throw new Error("API Key Error: " + listData.error.message);
-
-            // Find the first model that supports generating content
+            if (listData.error) throw new Error("API Error: " + listData.error.message);
             const bestModel = listData.models.find(m => m.supportedGenerationMethods.includes("generateContent") && m.name.includes("flash"));
-            const modelName = bestModel ? bestModel.name : "models/gemini-1.5-flash"; // Fallback
+            const modelName = bestModel ? bestModel.name : "models/gemini-1.5-flash";
 
-            status.innerText = "🧠 Using: " + modelName + "... Thinking...";
+            status.innerText = `🧠 Writing deeply detailed code for ${filename}...`;
 
-            // STEP 2: GENERATE THE CODE
+            // Super-charged Prompt Injection
+            const masterPrompt = `You are an expert Senior Frontend Developer. Write the complete, production-ready HTML, CSS, and JS for this request: "${prompt}". 
+            REQUIREMENTS: 
+            1. Use a modern, highly detailed, visually stunning design.
+            2. Include advanced CSS (flexbox/grid, animations, hover states, gradients).
+            3. Include robust JavaScript for interactivity.
+            4. Put everything into a single file. 
+            5. ONLY output the raw code, no markdown wrappers, no explanations.`;
+
             const aiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/${modelName}:generateContent?key=${GEMINI_KEY}`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ 
-                    contents: [{ parts: [{ text: "Write the full HTML code for a single webpage based on: " + prompt + ". Only output the raw HTML code, no markdown." }] }] 
-                })
+                body: JSON.stringify({ contents: [{ parts: [{ text: masterPrompt }] }] })
             });
             
             const data = await aiResponse.json();
-            if (data.error) throw new Error("Gemini Error: " + data.error.message);
-            
-            let newCode = data.candidates[0].content.parts[0].text;
-            newCode = newCode.replace(/```html|```/gi, "").trim();
+            if (data.error) throw new Error("AI Error: " + data.error.message);
+            let newCode = data.candidates[0].content.parts[0].text.replace(/```html|```/gi, "").trim();
 
-            status.innerText = "💾 Pushing to GitHub...";
+            status.innerText = `💾 Uploading ${filename} to GitHub...`;
 
-            // STEP 3: PUSH TO GITHUB
-            const getFile = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/index.html`, {
+            // Check if file exists to get SHA (needed for updates, omit for new files)
+            let fileSha = null;
+            const checkFile = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${filename}`, {
                 headers: { "Authorization": `token ${GH_TOKEN}` }
             });
-            const fileData = await getFile.json();
+            if (checkFile.ok) {
+                const fileData = await checkFile.json();
+                fileSha = fileData.sha;
+            }
 
-            const updateFile = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/index.html`, {
+            // Push the file
+            const pushBody = {
+                message: "AI created " + filename,
+                content: btoa(unescape(encodeURIComponent(newCode)))
+            };
+            if (fileSha) pushBody.sha = fileSha; // Only add SHA if updating an existing file
+
+            const updateFile = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${filename}`, {
                 method: "PUT",
                 headers: { "Authorization": `token ${GH_TOKEN}`, "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    message: "AI Update",
-                    content: btoa(unescape(encodeURIComponent(newCode))),
-                    sha: fileData.sha
-                })
+                body: JSON.stringify(pushBody)
             });
 
             if(updateFile.ok) {
-                status.innerText = "✅ SUCCESS! Refresh your main link in 30 seconds.";
+                status.innerText = "✅ DONE!";
+                status.style.background = "#238636";
+                const finalLink = `https://${REPO_OWNER}.github.io/${REPO_NAME}/${filename}`;
+                liveUrl.href = finalLink;
+                liveUrl.innerText = finalLink;
+                successBox.style.display = "block";
             } else {
-                throw new Error("GitHub Push Failed.");
+                throw new Error("GitHub rejected the upload. Check Token permissions.");
             }
         } catch (e) {
             status.innerText = "❌ " + e.message;
+            status.style.background = "#da3633";
         }
     }
 </script>
