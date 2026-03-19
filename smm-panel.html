@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SMM Panel Client Dashboard</title>
+    <!-- CRITICAL FIREBASE SCRIPTS -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <!-- End CRITICAL FIREBASE SCRIPTS -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+        :root {
+            --primary-bg: #1a1a2e;
+            --secondary-bg: rgba(28, 28, 44, 0.7); /* Slightly lighter for glass effect */
+            --card-bg: rgba(30, 30, 50, 0.6);
+            --border-color: rgba(255, 255, 255, 0.1);
+            --text-color: #e0e0e0;
+            --accent-color: #007bff; /* Blue */
+            --success-color: #28a745; /* Green */
+            --pending-color: #ffc107; /* Yellow */
+            --error-color: #dc3545; /* Red */
+            --input-bg: rgba(40, 40, 60, 0.5);
+            --button-bg: #4CAF50; /* Green for submit */
+            --button-hover-bg: #45a049;
+            --sidebar-width: 250px;
+            --navbar-height: 70px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--primary-bg);
+            color: var(--text-color);
+            line-height: 1.6;
+            display: flex;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Glassmorphism base style */
+        .glass-panel {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            padding: 25px;
+            margin-bottom: 20px;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: var(--card-bg); /* Use card-bg for glass effect */
+            border-right: 1px solid var(--border-color);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            padding: 30px 20px;
+            position: fixed;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            z-index: 1000;
+        }
+
+        .sidebar h2 {
+            text-align: center;
+            color: var(--accent-color);
+            margin-bottom: 30px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+        }
+
+        .sidebar nav ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .sidebar nav ul li {
+            margin-bottom: 15px;
+        }
+
+        .sidebar nav ul li a {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            color: var(--text-color);
+            text-decoration: none;
+            padding: 12px 15px;
+            border-radius: 10px;
+            transition: background 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .sidebar nav ul li a:hover,
+        .sidebar nav ul li a.active {
+            background-color: rgba(0, 123, 255, 0.2);
+            color: var(--accent-color);
+            box-shadow: 0 0 10px rgba(0, 123, 255, 0.4);
+        }
+
+        .sidebar nav ul li a i {
+            font-size: 1.2rem;
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Top Navbar */
+        .top-navbar {
+            height: var(--navbar-height);
+            background: var(--card-bg);
+            border-bottom: 1px solid var(--border-color);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            padding: 0 30px;
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: var(--accent-color);
+            position: sticky;
+            top: 0;
+            z-index: 999;
+        }
+
+        .top-navbar span {
+            padding: 8px 15px;
+            background: rgba(0, 123, 255, 0.1);
+            border-radius: 8px;
+            border: 1px solid rgba(0, 123, 255, 0.3);
+        }
+
+        /* Dashboard Sections */
+        .dashboard-sections {
+            padding: 30px;
+            flex-grow: 1;
+        }
+
+        .section-title {
+            font-size: 2rem;
+            margin-bottom: 30px;
+            color: var(--text-color);
+            font-weight: 600;
+        }
+
+        /* Form Styling */
+        .form-group {
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--text-color);
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px 15px;
+            background-color: var(--input-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-color);
+            font-size: 1rem;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .form-group input::placeholder {
+            color: rgba(224, 224, 224, 0.6);
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            border-color: var(--accent-color);
+            box-shadow: 0 0 8px rgba(0, 123, 255, 0.5);
+            outline: none;
+        }
+
+        /* Custom dropdown arrow for better dark mode aesthetics */
+        .form-group select {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23e0e0e0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 15px center;
+            background-size: 18px;
+            padding-right: 40px; /* Make space for the arrow */
+        }
+
+        .form-group option {
+            background-color: var(--primary-bg); /* Dark background for options */
+            color: var(--text-color);
+        }
+
+
+        .price-display {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--accent-color);
+            margin-top: 15px;
+            padding: 10px 15px;
+            background: rgba(0, 123, 255, 0.1);
+            border-radius: 8px;
+            border: 1px solid rgba(0, 123, 255, 0.3);
+            text-align: center;
+        }
+
+        .submit-button {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            background-color: var(--button-bg);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            margin-top: 30px;
+        }
+
+        .submit-button:hover {
+            background-color: var(--button-hover-bg);
+            transform: translateY(-2px);
+        }
+
+        .submit-button:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+        }
+
+        .form-message {
+            margin-top: 20px;
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-weight: 500;
+            text-align: center;
+        }
+
+        .form-message.success {
+            background-color: rgba(40, 167, 69, 0.2);
+            color: var(--success-color);
+            border: 1px solid var(--success-color);
+        }
+
+        .form-message.error {
+            background-color: rgba(220, 53, 69, 0.2);
+            color: var(--error-color);
+            border: 1px solid var(--error-color);
+        }
+
+        /* Table Styling */
+        .order-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0; /* Remove default spacing */
+            margin-top: 20px;
+            border-radius: 15px;
+            overflow: hidden; /* Ensures border-radius applies to corners */
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37); /* Matches glass panel shadow */
+        }
+
+        .order-table th,
+        .order-table td {
+            padding: 15px 20px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08); /* Lighter border for contrast */
+        }
+
+        .order-table th {
+            background-color: rgba(0, 123, 255, 0.15); /* Accent tint for header */
+            color: var(--accent-color);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+
+        .order-table tr:nth-child(even) {
+            background-color: rgba(30, 30, 50, 0.4); /* Zebra striping */
+        }
+
+        .order-table tr:nth-child(odd) {
+            background-color: rgba(30, 30, 50, 0.6);
+        }
+
+        .order-table tr:hover {
+            background-color: rgba(0, 123, 255, 0.1); /* Hover effect */
+        }
+
+        .order-table td {
+            color: var(--text-color);
+            font-size: 0.95rem;
+        }
+
+        /* Status Badges */
+        .status-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: capitalize;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .status-badge.pending {
+            background-color: rgba(255, 193, 7, 0.2);
+            color: var(--pending-color);
+            border: 1px solid var(--pending-color);
+        }
+
+        .status-badge.completed {
+            background-color: rgba(40, 167, 69, 0.2);
+            color: var(--success-color);
+            border: 1px solid var(--success-color);
+        }
+
+        .no-orders-message {
+            text-align: center;
+            padding: 50px;
+            font-size: 1.2rem;
+            color: rgba(224, 224, 224, 0.7);
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+
+        /* Link Styling in table */
+        .order-table a {
+            color: var(--accent-color);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .order-table a:hover {
+            text-decoration: underline;
+        }
+    </style>
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" integrity="sha512-Fo3rlrZj/k7ujTnHg4CGR2D7kSs04CkLFXgF8nOWJ+1qL0fP8lQ+bM9T/z2x4M+C8c4O6V+8+N+M+5+M+8w==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+</head>
+<body>
+    <aside class="sidebar">
+        <h2>SMM Panel</h2>
+        <nav>
+            <ul>
+                <li><a href="#" id="nav-new-order" class="active"><i class="fas fa-plus-circle"></i> New Order</a></li>
+                <li><a href="#" id="nav-order-history"><i class="fas fa-history"></i> Order History</a></li>
+            </ul>
+        </nav>
+    </aside>
+
+    <div class="main-content">
+        <header class="top-navbar">
+            <span>Account Balance: $<span id="account-balance">150.00</span></span>
+        </header>
+
+        <main class="dashboard-sections">
+            <!-- New Order Section -->
+            <section id="new-order-section">
+                <h1 class="section-title">Place a New Order</h1>
+                <div class="glass-panel">
+                    <form id="new-order-form">
+                        <div class="form-group">
+                            <label for="category">Category</label>
+                            <select id="category" required>
+                                <option value="">Select Category</option>
+                                <option value="instagram">Instagram</option>
+                                <option value="youtube">YouTube</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="service">Service</label>
+                            <select id="service" required disabled>
+                                <option value="">Select a Category First</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="link">Link</label>
+                            <input type="url" id="link" placeholder="Enter link (e.g., https://instagram.com/p/abcdef)" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="quantity">Quantity</label>
+                            <input type="number" id="quantity" min="100" value="100" required>
+                        </div>
+                        <div class="price-display">
+                            Total Price: $<span id="total-price">0.00</span>
+                        </div>
+                        <button type="submit" class="submit-button" id="submit-order-btn">Submit Order</button>
+                        <div id="form-message" class="form-message" style="display: none;"></div>
+                    </form>
+                </div>
+            </section>
+
+            <!-- Order History Section -->
+            <section id="order-history-section" style="display: none;">
+                <h1 class="section-title">Order History</h1>
+                <div class="glass-panel">
+                    <div id="orders-display">
+                        <p class="no-orders-message" id="no-orders-message">No orders yet.</p>
+                        <table class="order-table" id="orders-table" style="display: none;">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Service</th>
+                                    <th>Link</th>
+                                    <th>Quantity</th>
+                                    <th>Price</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="orders-table-body">
+                                <!-- Order rows will be inserted here by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        // CRITICAL FIREBASE CONFIG
+        const firebaseConfig = {
+            apiKey: "AIzaSyASm3_DewrSoTXaNE_GoG9LxoSI15q0EY8",
+            authDomain: "auto-35527.firebaseapp.com",
+            projectId: "auto-35527",
+            storageBucket: "auto-35527.firebasestorage.app",
+            messagingSenderId: "82228269253",
+            appId: "1:82228269253:web:0bd872188d135462aae0ac"
+        };
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const smmDocRef = db.collection('smm-panel_data').doc('main');
+
+        // --- UI Elements ---
+        const newOrderSection = document.getElementById('new-order-section');
+        const orderHistorySection = document.getElementById('order-history-section');
+        const navNewOrder = document.getElementById('nav-new-order');
+        const navOrderHistory = document.getElementById('nav-order-history');
+
+        const categorySelect = document.getElementById('category');
+        const serviceSelect = document.getElementById('service');
+        const linkInput = document.getElementById('link');
+        const quantityInput = document.getElementById('quantity');
+        const totalPriceSpan = document.getElementById('total-price');
+        const submitOrderBtn = document.getElementById('submit-order-btn');
+        const newOrderForm = document.getElementById('new-order-form');
+        const formMessage = document.getElementById('form-message');
+
+        const accountBalanceSpan = document.getElementById('account-balance');
+        const ordersTableBody = document.getElementById('orders-table-body');
+        const noOrdersMessage = document.getElementById('no-orders-message');
+        const ordersTable = document.getElementById('orders-table');
+
+        // --- Data ---
+        const servicesData = {
+            instagram: [
+                { id: 'ig-likes-1k', name: '1000 IG Likes', pricePerUnit: 0.001, minQuantity: 100, maxQuantity: 100000 }, // $1.00 per 1000 likes
+                { id: 'ig-followers-500', name: '500 IG Followers', pricePerUnit: 0.005, minQuantity: 10, maxQuantity: 50000 }, // $2.50 per 500 followers
+                { id: 'ig-views-10k', name: '10000 IG Views', pricePerUnit: 0.00005, minQuantity: 1000, maxQuantity: 1000000 } // $0.50 per 10000 views
+            ],
+            youtube: [
+                { id: 'yt-views-10k', name: '10000 YT Views', pricePerUnit: 0.0003, minQuantity: 1000, maxQuantity: 500000 }, // $3.00 per 10000 views
+                { id: 'yt-subs-100', name: '100 YT Subscribers', pricePerUnit: 0.05, minQuantity: 10, maxQuantity: 10000 }, // $5.00 per 100 subscribers
+                { id: 'yt-likes-500', name: '500 YT Likes', pricePerUnit: 0.003, minQuantity: 50, maxQuantity: 5000 } // $1.50 per 500 likes
+            ]
+        };
+
+        let currentAccountBalance = 150.00; // Default or fetched from Firestore
+
+        // --- Functions ---
+
+        // Display messages
+        function showMessage(message, type) {
+            formMessage.textContent = message;
+            formMessage.className = `form-message ${type}`;
+            formMessage.style.display = 'block';
+            setTimeout(() => {
+                formMessage.style.display = 'none';
+            }, 5000);
+        }
+
+        // Navigation
+        function showSection(sectionId) {
+            newOrderSection.style.display = 'none';
+            orderHistorySection.style.display = 'none';
+            document.getElementById(sectionId).style.display = 'block';
+
+            navNewOrder.classList.remove('active');
+            navOrderHistory.classList.remove('active');
+            if (sectionId === 'new-order-section') {
+                navNewOrder.classList.add('active');
+            } else {
+                navOrderHistory.classList.add('active');
+            }
+        }
+
+        // Populate service dropdown based on category
+        function populateServices() {
+            const category = categorySelect.value;
+            serviceSelect.innerHTML = '<option value="">Select Service</option>';
+            serviceSelect.disabled = true;
+            quantityInput.value = '';
+            quantityInput.setAttribute('min', '1');
+            quantityInput.setAttribute('max', '');
+            totalPriceSpan.textContent = '0.00';
+
+            if (category && servicesData[category]) {
+                servicesData[category].forEach(service => {
+                    const option = document.createElement('option');
+                    option.value = service.id;
+                    option.textContent = `${service.name} (Min: ${service.minQuantity}, Max: ${service.maxQuantity})`;
+                    serviceSelect.appendChild(option);
+                });
+                serviceSelect.disabled = false;
+            }
+        }
+
+        // Calculate total price
+        function calculateTotalPrice() {
+            const selectedServiceId = serviceSelect.value;
+            const quantity = parseInt(quantityInput.value);
+
+            let servicePricePerUnit = 0;
+            let minQuantity = 1;
+            let maxQuantity = Infinity;
+
+            if (selectedServiceId && quantity > 0) {
+                const category = categorySelect.value;
+                const service = servicesData[category]?.find(s => s.id === selectedServiceId);
+                if (service) {
+                    servicePricePerUnit = service.pricePerUnit;
+                    minQuantity = service.minQuantity;
+                    maxQuantity = service.maxQuantity;
+                }
+            }
+
+            // Enforce min/max quantity
+            if (quantity < minQuantity) {
+                quantityInput.value = minQuantity;
+            }
+            if (quantity > maxQuantity) {
+                quantityInput.value = maxQuantity;
+            }
+
+            const actualQuantity = parseInt(quantityInput.value);
+            const totalPrice = (actualQuantity * servicePricePerUnit).toFixed(2);
+            totalPriceSpan.textContent = totalPrice;
+
+            // Enable/disable submit button based on valid input
+            const selectedCategory = categorySelect.value;
+            const selectedService = serviceSelect.value;
+            const link = linkInput.value;
+            const isValidQuantity = actualQuantity >= minQuantity && actualQuantity <= maxQuantity;
+            const total = parseFloat(totalPrice);
+
+            submitOrderBtn.disabled = !(selectedCategory && selectedService && link && isValidQuantity && total > 0);
+        }
+
+        // Clear New Order form
+        function clearNewOrderForm() {
+            newOrderForm.reset();
+            populateServices(); // Resets service dropdown too
+            totalPriceSpan.textContent = '0.00';
+            submitOrderBtn.disabled = true;
+        }
+
+        // --- Event Listeners ---
+        navNewOrder.addEventListener('click', (e) => {
+            e.preventDefault();
+            showSection('new-order-section');
+        });
+
+        navOrderHistory.addEventListener('click', (e) => {
+            e.preventDefault();
+            showSection('order-history-section');
+        });
+
+        categorySelect.addEventListener('change', populateServices);
+        serviceSelect.addEventListener('change', () => {
+            const selectedServiceId = serviceSelect.value;
+            if (selectedServiceId) {
+                const category = categorySelect.value;
+                const service = servicesData[category]?.find(s => s.id === selectedServiceId);
+                if (service) {
+                    quantityInput.setAttribute('min', service.minQuantity);
+                    quantityInput.setAttribute('max', service.maxQuantity);
+                    quantityInput.value = service.minQuantity; // Set to min quantity by default
+                }
+            }
+            calculateTotalPrice();
+        });
+        quantityInput.addEventListener('input', calculateTotalPrice);
+        linkInput.addEventListener('input', calculateTotalPrice); // Recalculate to enable/disable button
+
+        newOrderForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            submitOrderBtn.disabled = true;
+            submitOrderBtn.textContent = 'Submitting...';
+            formMessage.style.display = 'none';
+
+            const category = categorySelect.value;
+            const selectedServiceId = serviceSelect.value;
+            const link = linkInput.value;
+            const quantity = parseInt(quantityInput.value);
+            const price = parseFloat(totalPriceSpan.textContent);
+
+            if (!category || !selectedServiceId || !link || !quantity || price <= 0) {
+                showMessage('Please fill all fields correctly.', 'error');
+                submitOrderBtn.disabled = false;
+                submitOrderBtn.textContent = 'Submit Order';
+                return;
+            }
+
+            const selectedService = servicesData[category].find(s => s.id === selectedServiceId);
+            const serviceName = selectedService ? selectedService.name : 'Unknown Service';
+
+            if (price > currentAccountBalance) {
+                showMessage('Insufficient account balance. Please top up.', 'error');
+                submitOrderBtn.disabled = false;
+                submitOrderBtn.textContent = 'Submit Order';
+                return;
+            }
+
+            const newOrder = {
+                id: Date.now().toString(36) + Math.random().toString(36).substr(2), // Simple unique ID
+                service: serviceName,
+                link: link,
+                quantity: quantity,
+                price: price,
+                status: 'Pending',
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            };
+
+            try {
+                const doc = await smmDocRef.get();
+                let orders = [];
+                let balance = currentAccountBalance;
+
+                if (doc.exists) {
+                    const data = doc.data();
+                    orders = data.orders || [];
+                    balance = data.accountBalance !== undefined ? data.accountBalance : currentAccountBalance;
+                }
+
+                // Check balance again from fetched data in case of concurrent updates
+                if (price > balance) {
+                    showMessage('Insufficient account balance. Please top up.', 'error');
+                    submitOrderBtn.disabled = false;
+                    submitOrderBtn.textContent = 'Submit Order';
+                    return;
+                }
+
+                orders.push(newOrder);
+                balance = parseFloat((balance - price).toFixed(2)); // Deduct price from balance
+
+                await smmDocRef.set({
+                    orders: orders,
+                    accountBalance: balance
+                }, { merge: true }); // Use set with merge to ensure doc structure is maintained/created
+
+                showMessage('Order submitted successfully!', 'success');
+                clearNewOrderForm();
+                currentAccountBalance = balance; // Update local balance
+                accountBalanceSpan.textContent = currentAccountBalance.toFixed(2);
+            } catch (error) {
+                console.error("Error submitting order: ", error);
+                showMessage('Error submitting order. Please try again.', 'error');
+            } finally {
+                submitOrderBtn.disabled = false;
+                submitOrderBtn.textContent = 'Submit Order';
+            }
+        });
+
+        // --- Firebase Realtime Listener for Order History ---
+        smmDocRef.onSnapshot((doc) => {
+            if (doc.exists) {
+                const data = doc.data();
+                const orders = data.orders || [];
+                currentAccountBalance = data.accountBalance !== undefined ? data.accountBalance : 150.00; // Update balance from Firestore
+
+                accountBalanceSpan.textContent = currentAccountBalance.toFixed(2);
+
+                ordersTableBody.innerHTML = ''; // Clear existing rows
+
+                if (orders.length === 0) {
+                    noOrdersMessage.style.display = 'block';
+                    ordersTable.style.display = 'none';
+                } else {
+                    noOrdersMessage.style.display = 'none';
+                    ordersTable.style.display = 'table';
+
+                    // Sort orders by timestamp descending
+                    const sortedOrders = orders.sort((a, b) => (b.timestamp?.toDate() || 0) - (a.timestamp?.toDate() || 0));
+
+                    sortedOrders.forEach(order => {
+                        const row = ordersTableBody.insertRow();
+                        row.insertCell(0).textContent = order.id.substring(0, 8); // Display first 8 chars of ID
+                        row.insertCell(1).textContent = order.service;
+                        const linkCell = row.insertCell(2);
+                        const linkAnchor = document.createElement('a');
+                        linkAnchor.href = order.link;
+                        linkAnchor.target = '_blank';
+                        linkAnchor.textContent = order.link.length > 30 ? order.link.substring(0, 30) + '...' : order.link;
+                        linkCell.appendChild(linkAnchor);
+                        row.insertCell(3).textContent = order.quantity;
+                        row.insertCell(4).textContent = `$${order.price.toFixed(2)}`;
+                        const statusCell = row.insertCell(5);
+                        const statusBadge = document.createElement('span');
+                        statusBadge.classList.add('status-badge', order.status.toLowerCase());
+                        statusBadge.textContent = order.status;
+                        statusCell.appendChild(statusBadge);
+                    });
+                }
+            } else {
+                // Document does not exist, initialize it with default values
+                smmDocRef.set({
+                    orders: [],
+                    accountBalance: currentAccountBalance
+                }).then(() => {
+                    console.log("Firestore document initialized.");
+                }).catch(error => {
+                    console.error("Error initializing Firestore document:", error);
+                });
+                noOrdersMessage.style.display = 'block';
+                ordersTable.style.display = 'none';
+            }
+        }, (error) => {
+            console.error("Error fetching Firestore data:", error);
+            // Handle error, maybe show an error message to the user
+            noOrdersMessage.textContent = "Error loading orders. Please try again later.";
+            noOrdersMessage.style.display = 'block';
+            ordersTable.style.display = 'none';
+        });
+
+        // Initial setup
+        document.addEventListener('DOMContentLoaded', () => {
+            showSection('new-order-section');
+            populateServices(); // Initialize service dropdown
+            calculateTotalPrice(); // Set initial total price
+        });
+    </script>
+</body>
+</html>
