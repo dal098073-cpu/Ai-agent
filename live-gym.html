@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Haryanvi Calisthenics Dashboard</title>
+
+    <!-- CRITICAL FIREBASE SCRIPTS - DO NOT MODIFY -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <!-- END CRITICAL FIREBASE SCRIPTS -->
+
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Montserrat:wght@300;400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --dark-bg: #0a0a0a;
+            --dark-card-bg: #1a1a1a;
+            --neon-green: #39FF14;
+            --text-light: #e0e0e0;
+            --border-glow: #2c9911;
+            --accent-purple: #8A2BE2; /* A subtle accent for premium feel */
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background-color: var(--dark-bg);
+            color: var(--text-light);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            overflow: hidden; /* Prevent scrollbar from neon glow */
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at center, rgba(57, 255, 20, 0.1) 0%, transparent 70%);
+            animation: backgroundPulse 15s infinite alternate ease-in-out;
+            z-index: 0;
+        }
+
+        @keyframes backgroundPulse {
+            0% { transform: scale(0.9); opacity: 0.8; }
+            100% { transform: scale(1.1); opacity: 1; }
+        }
+
+        .dashboard-container {
+            background-color: var(--dark-card-bg);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 0 50px rgba(0, 255, 0, 0.2), 0 0 100px rgba(0, 255, 0, 0.1);
+            max-width: 1200px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+            position: relative;
+            z-index: 1;
+            border: 2px solid var(--border-glow);
+            animation: borderGlow 3s infinite alternate;
+        }
+
+        @keyframes borderGlow {
+            0% { border-color: rgba(57, 255, 20, 0.5); box-shadow: 0 0 20px rgba(57, 255, 20, 0.2); }
+            100% { border-color: rgba(57, 255, 20, 0.9); box-shadow: 0 0 40px rgba(57, 255, 20, 0.4); }
+        }
+
+        h1.dashboard-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 3.5em; /* Responsive font size */
+            color: var(--neon-green);
+            text-align: center;
+            text-shadow: 0 0 10px var(--neon-green), 0 0 20px var(--neon-green), 0 0 30px rgba(57, 255, 20, 0.7);
+            margin-bottom: 20px;
+            letter-spacing: 2px;
+            animation: flicker 1.5s infinite alternate;
+        }
+
+        @keyframes flicker {
+            0%, 18%, 22%, 25%, 53%, 57%, 100% {
+                text-shadow: 0 0 10px var(--neon-green), 0 0 20px var(--neon-green), 0 0 30px rgba(57, 255, 20, 0.7);
+                opacity: 1;
+            }
+            20%, 24%, 55% {
+                text-shadow: none;
+                opacity: 0.8;
+            }
+        }
+
+        .data-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 30px;
+        }
+
+        @media (min-width: 768px) {
+            .data-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        .data-card {
+            background: linear-gradient(135deg, rgba(30, 30, 30, 0.9), rgba(10, 10, 10, 0.9));
+            border-radius: 15px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: 0 0 30px rgba(0, 255, 0, 0.1), inset 0 0 10px rgba(57, 255, 20, 0.3);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(57, 255, 20, 0.3);
+        }
+
+        .data-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at center, rgba(57, 255, 20, 0.05) 0%, transparent 70%);
+            animation: cardGlow 8s infinite alternate ease-in-out;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .data-card:hover::before {
+            opacity: 1;
+        }
+
+        @keyframes cardGlow {
+            0% { transform: scale(0.9) rotate(0deg); }
+            100% { transform: scale(1.1) rotate(10deg); }
+        }
+
+        .data-card h2 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.8em;
+            color: var(--text-light);
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            position: relative;
+        }
+
+        .data-card h2::after {
+            content: '';
+            display: block;
+            width: 60px;
+            height: 3px;
+            background-color: var(--neon-green);
+            box-shadow: 0 0 8px var(--neon-green);
+            margin: 10px auto 0;
+            border-radius: 2px;
+        }
+
+        .data-value {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 5em; /* Massive text */
+            font-weight: 700;
+            color: var(--neon-green);
+            text-shadow:
+                0 0 10px var(--neon-green),
+                0 0 20px var(--neon-green),
+                0 0 30px var(--neon-green),
+                0 0 40px var(--neon-green),
+                0 0 70px var(--neon-green),
+                0 0 80px var(--neon-green),
+                0 0 100px var(--neon-green),
+                0 0 150px var(--neon-green);
+            display: block;
+            margin-top: 15px;
+            transition: all 0.5s ease-in-out;
+            min-height: 100px; /* Ensure consistent height for loading state */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            line-height: 1;
+            word-break: break-word; /* Allow long words to break */
+            hyphens: auto; /* Allow hyphenation */
+        }
+
+        @media (max-width: 768px) {
+            h1.dashboard-title {
+                font-size: 2.5em;
+            }
+            .data-card h2 {
+                font-size: 1.5em;
+            }
+            .data-value {
+                font-size: 3em;
+            }
+            .dashboard-container {
+                padding: 20px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            h1.dashboard-title {
+                font-size: 2em;
+            }
+            .data-card h2 {
+                font-size: 1.2em;
+            }
+            .data-value {
+                font-size: 2.5em;
+            }
+            .dashboard-container {
+                padding: 15px;
+            }
+        }
+
+        .footer {
+            margin-top: 40px;
+            text-align: center;
+            font-size: 0.9em;
+            color: rgba(224, 224, 224, 0.7);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="dashboard-container">
+        <h1 class="dashboard-title">हरियाणावी कैलिसथेनिक्स</h1>
+        <div class="data-grid">
+            <div class="data-card">
+                <h2>Workout of the Day</h2>
+                <span id="workoutOfDay" class="data-value">Loading Cloud Data...</span>
+            </div>
+            <div class="data-card">
+                <h2>Highest Reps Achieved</h2>
+                <span id="highestReps" class="data-value">Loading Cloud Data...</span>
+            </div>
+        </div>
+        <div class="footer">
+            Powered by Firebase Realtime Data | Get Strong, Haryanvi Style!
+        </div>
+    </div>
+
+    <script>
+        // CRITICAL FIREBASE CONFIG - DO NOT MODIFY
+        const firebaseConfig = {
+            apiKey: "AIzaSyASm3_DewrSoTXaNE_GoG9LxoSI15q0EY8",
+            authDomain: "auto-35527.firebaseapp.com",
+            projectId: "auto-35527",
+            storageBucket: "auto-35527.firebasestorage.app",
+            messagingSenderId: "82228269253",
+            appId: "1:82228269253:web:0bd872188d135462aae0ac"
+        };
+        // END CRITICAL FIREBASE CONFIG
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+
+        // Get a reference to the Firestore database
+        const db = firebase.firestore();
+
+        // Get a reference to the specific document
+        // Collection: 'live-gym_data', Document: 'main'
+        const docRef = db.collection('live-gym_data').doc('main');
+
+        // Get DOM elements to display data
+        const workoutOfDayElement = document.getElementById('workoutOfDay');
+        const highestRepsElement = document.getElementById('highestReps');
+
+        // Set up real-time listener using onSnapshot
+        docRef.onSnapshot((doc) => {
+            if (doc.exists) {
+                const data = doc.data();
+                console.log("Current data: ", data); // For debugging
+
+                // Update "Workout of the Day"
+                if (data && data.workoutOfDay) {
+                    workoutOfDayElement.textContent = data.workoutOfDay;
+                } else {
+                    workoutOfDayElement.textContent = 'No WOD Set Yet!';
+                }
+
+                // Update "Highest Reps"
+                if (data && data.highestReps) {
+                    highestRepsElement.textContent = data.highestReps;
+                } else {
+                    highestRepsElement.textContent = 'No Reps Logged!';
+                }
+            } else {
+                console.log("No such document!");
+                workoutOfDayElement.textContent = 'No Workout Data Yet!';
+                highestRepsElement.textContent = 'No Reps Data Yet!';
+            }
+        }, (error) => {
+            console.error("Error fetching document: ", error);
+            workoutOfDayElement.textContent = 'Error Loading Data!';
+            highestRepsElement.textContent = 'Error Loading Data!';
+        });
+    </script>
+</body>
+</html>
