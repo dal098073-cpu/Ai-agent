@@ -1,82 +1,65 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gtg - Gotta Go!</title>
+    <title>The Red Website</title>
     <style>
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #CC0000; /* A strong shade of red */
+            color: #FFFFFF; /* White text for contrast */
+            font-family: Arial, sans-serif;
             margin: 0;
-            padding: 0;
-            background-color: #e0f2f7; /* Light blue background */
-            color: #333;
+            padding: 20px;
             display: flex;
             flex-direction: column;
-            justify-content: center;
             align-items: center;
-            min-height: 100vh;
+            justify-content: center;
+            min-height: 100vh; /* Ensure the body takes full viewport height */
+            box-sizing: border-box;
             text-align: center;
         }
         .container {
-            background-color: #ffffff;
-            padding: 50px 70px;
-            border-radius: 12px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-            max-width: 700px;
-            width: 90%;
-            border: 1px solid #c0e0e8;
+            background-color: rgba(0, 0, 0, 0.3); /* Slightly transparent dark background for content */
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+            max-width: 800px;
         }
         h1 {
-            color: #007bff; /* Blue heading */
-            margin-bottom: 25px;
-            font-size: 3.5em;
-            font-weight: 700;
-            letter-spacing: 1px;
+            color: #FFDDDD; /* Lighter red for heading */
+            font-size: 3em;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
         }
         p {
-            font-size: 1.3em;
-            line-height: 1.8;
-            margin-bottom: 30px;
+            font-size: 1.2em;
+            line-height: 1.6;
+            margin-bottom: 15px;
         }
-        .action-button {
-            display: inline-block;
-            background-color: #28a745; /* Green button */
-            color: white;
-            padding: 15px 30px;
+        a {
+            color: #FFFF99; /* Yellowish link for contrast */
             text-decoration: none;
-            border-radius: 8px;
             font-weight: bold;
-            font-size: 1.1em;
-            transition: background-color 0.3s ease, transform 0.2s ease;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-            border: none;
-            cursor: pointer;
         }
-        .action-button:hover {
-            background-color: #218838;
-            transform: translateY(-2px);
+        a:hover {
+            text-decoration: underline;
         }
-        .action-button:active {
-            transform: translateY(0);
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-        }
-        footer {
+        .footer {
             margin-top: 40px;
             font-size: 0.9em;
-            color: #777;
+            color: #FFEEEE; /* Lighter red for footer text */
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Gtg!</h1>
-        <p>It's been a fun ride, but all good things must come to an end.</p>
-        <p>Time to pack up and head out for new adventures. See you around!</p>
-        <button class="action-button" onclick="alert('Farewell! Hope to see you again soon!');">Acknowledge Departure</button>
+        <h1>Welcome to the Red Domain!</h1>
+        <p>This entire webpage is dedicated to the magnificent colour red. From its vibrant background to the subtle hints in its text, red dominates every pixel you see.</p>
+        <p>Red symbolizes passion, energy, and strength. We've embraced these qualities to bring you a bold and striking web experience.</p>
+        <p>Explore the simplicity and power of a single-colour theme. Thank you for visiting the red side of the internet!</p>
+        <p>If you have any questions, feel free to imagine them in red, too.</p>
     </div>
-    <footer>
-        <p>&copy; 2023 Gtg Adventures. All rights reserved.</p>
-    </footer>
+    <div class="footer">
+        <p>&copy; 2023 The Red Website. All rights reserved (in red, of course).</p>
+    </div>
 </body>
 </html>
