@@ -1,248 +1,427 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Haryanvi Calisthenics - Asli Rob, Asli Fitness</title>
-    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@700&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <title>Mission IIT 2028 Dashboard</title>
     <style>
-        :root {
-            --primary-bg-color: #000000;
-            --secondary-bg-color: #1a1a1a;
-            --accent-color: #FF4500; /* Neon Orange */
-            --text-color-light: #ffffff;
-            --text-color-dark: #333333;
-            --glow-light-orange: rgba(255, 69, 0, 0.7);
-            --glow-dark-orange: rgba(255, 69, 0, 1);
-        }
-
-        /* Basic Reset & Body Styling */
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
         body {
-            font-family: 'Roboto', sans-serif;
-            background-color: var(--primary-bg-color);
-            color: var(--text-color-light);
-            text-align: center;
-            line-height: 1.6;
-            overflow-x: hidden; /* Prevent horizontal scroll from glowing elements */
-        }
-
-        /* Main Title Styling */
-        h1 {
-            font-family: 'Oswald', sans-serif;
-            font-size: 4.5em;
-            font-weight: 700;
-            color: var(--accent-color);
-            margin: 80px 20px 40px;
-            text-shadow: 0 0 15px var(--glow-light-orange), 0 0 30px var(--glow-light-orange);
-            letter-spacing: 2px;
-            animation: pulse-glow 2s infinite alternate;
-        }
-
-        @keyframes pulse-glow {
-            from {
-                text-shadow: 0 0 10px var(--glow-light-orange), 0 0 20px var(--glow-light-orange);
-            }
-            to {
-                text-shadow: 0 0 20px var(--glow-dark-orange), 0 0 40px var(--glow-dark-orange);
-            }
-        }
-
-        /* Section Styling */
-        section {
-            padding: 60px 20px;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        h2 {
-            font-family: 'Oswald', sans-serif;
-            font-size: 3em;
-            color: var(--text-color-light);
-            margin-bottom: 50px;
-            text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
-        }
-
-        /* Card Container */
-        .card-container {
-            display: flex;
-            justify-content: center;
-            flex-wrap: wrap;
-            gap: 40px;
-        }
-
-        /* Individual Card Styling */
-        .card {
-            background-color: var(--secondary-bg-color);
-            border: 2px solid var(--accent-color);
-            border-radius: 15px;
-            padding: 40px;
-            width: 320px;
-            box-shadow: 0 0 25px var(--glow-light-orange);
-            transition: transform 0.4s ease-in-out, box-shadow 0.4s ease-in-out;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #000000;
+            color: #E0BBE4;
+            margin: 0;
+            padding: 20px;
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
+            align-items: center;
+            min-height: 100vh;
         }
 
-        .card:hover {
-            transform: translateY(-15px) scale(1.02);
-            box-shadow: 0 10px 40px var(--glow-dark-orange), 0 0 60px var(--glow-dark-orange);
-        }
-
-        .card h3 {
-            font-family: 'Oswald', sans-serif;
-            font-size: 2.2em;
-            color: var(--accent-color);
+        h1, h2, h3 {
+            color: #957DAD;
+            text-align: center;
             margin-bottom: 20px;
-            text-shadow: 0 0 8px rgba(255, 69, 0, 0.7);
         }
 
-        .card p {
-            font-size: 1.1em;
-            color: #cccccc;
-            margin-bottom: 30px;
+        .dashboard-header {
+            width: 100%;
+            max-width: 1200px;
+            text-align: center;
+            margin-bottom: 40px;
         }
 
-        /* Glow Button Styling */
-        .glow-button {
-            background-color: var(--accent-color);
-            color: var(--primary-bg-color);
-            border: none;
-            padding: 15px 30px;
-            border-radius: 10px;
-            font-size: 1.2em;
+        .countdown-container {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin-bottom: 50px;
+            flex-wrap: wrap;
+        }
+
+        .countdown-card {
+            background-color: #1A001A;
+            border: 2px solid #957DAD;
+            border-radius: 15px;
+            padding: 25px 35px;
+            text-align: center;
+            box-shadow: 0 0 20px rgba(149, 125, 173, 0.4);
+            flex: 1;
+            min-width: 300px;
+            max-width: 45%;
+            box-sizing: border-box;
+        }
+
+        .countdown-card h2 {
+            margin-top: 0;
+            color: #E0BBE4;
+            font-size: 1.8em;
+            margin-bottom: 15px;
+        }
+
+        .countdown-timer {
+            font-size: 2.8em;
             font-weight: bold;
-            cursor: pointer;
-            outline: none;
-            transition: all 0.3s ease-in-out;
-            box-shadow: 0 0 15px var(--glow-light-orange);
-            text-transform: uppercase;
-            letter-spacing: 1px;
+            color: #CC2936;
+            letter-spacing: 2px;
+            display: block;
         }
 
-        .glow-button:hover {
-            background-color: #FF6347; /* Slightly lighter orange on hover */
-            color: var(--text-color-light); /* White text on hover */
-            box-shadow: 0 0 25px var(--glow-dark-orange), 0 0 50px var(--glow-dark-orange), 0 0 75px var(--glow-dark-orange);
-            transform: scale(1.08);
-            text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+        .countdown-timer span {
+            display: inline-block;
+            margin: 0 5px;
+            background-color: #3D003D;
+            padding: 8px 15px;
+            border-radius: 8px;
         }
 
-        /* Footer and Quote Styling */
-        footer {
-            margin-top: 80px;
-            padding: 50px 20px;
-            background-color: var(--secondary-bg-color);
-            border-top: 3px solid var(--accent-color);
-            box-shadow: 0 -5px 20px var(--glow-light-orange);
+        .subject-cards-container {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-bottom: 50px;
+            flex-wrap: wrap;
+            max-width: 1200px;
+            width: 100%;
         }
 
-        .quote {
-            font-family: 'Roboto', sans-serif;
+        .subject-card {
+            background-color: #1A001A;
+            border: 2px solid #6F2DBD;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 0 15px rgba(111, 45, 189, 0.5);
+            flex: 1;
+            min-width: 280px;
+            max-width: 30%;
+            box-sizing: border-box;
+        }
+
+        .subject-card h3 {
+            color: #E0BBE4;
+            margin-top: 0;
             font-size: 1.6em;
-            font-style: italic;
-            color: var(--text-color-light);
-            max-width: 900px;
-            margin: 0 auto;
-            text-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
-            line-height: 1.8;
+            margin-bottom: 20px;
+            border-bottom: 1px dashed #6F2DBD;
+            padding-bottom: 10px;
         }
 
-        /* Responsive Adjustments */
-        @media (max-width: 768px) {
-            h1 {
-                font-size: 3em;
-                margin-top: 50px;
-            }
-
-            h2 {
-                font-size: 2.5em;
-                margin-bottom: 40px;
-            }
-
-            .card {
-                width: 90%;
-                max-width: 400px;
-                padding: 30px;
-            }
-
-            .card h3 {
-                font-size: 1.8em;
-            }
-
-            .card p {
-                font-size: 1em;
-            }
-
-            .glow-button {
-                padding: 12px 25px;
-                font-size: 1.1em;
-            }
-
-            .quote {
-                font-size: 1.3em;
-            }
+        .subject-card ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
         }
 
-        @media (max-width: 480px) {
-            h1 {
+        .subject-card li {
+            background-color: #3D003D;
+            padding: 10px 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            color: #E0BBE4;
+            font-size: 1.1em;
+            transition: background-color 0.3s ease;
+        }
+
+        .subject-card li:hover {
+            background-color: #6F2DBD;
+        }
+
+        .motivation-section {
+            text-align: center;
+            margin-bottom: 40px;
+            width: 100%;
+        }
+
+        .motivation-button {
+            background-color: #CC2936;
+            color: #FFFFFF;
+            border: none;
+            padding: 18px 35px;
+            font-size: 1.5em;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            box-shadow: 0 5px 20px rgba(204, 41, 54, 0.4);
+            letter-spacing: 1px;
+            font-weight: bold;
+        }
+
+        .motivation-button:hover {
+            background-color: #A61D2A;
+            transform: translateY(-3px);
+        }
+
+        .motivation-button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 10px rgba(204, 41, 54, 0.4);
+        }
+
+        /* Confetti effect styles */
+        .confetti-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.5s ease;
+        }
+
+        .confetti-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .confetti-quote {
+            color: #E0BBE4;
+            font-size: 3em;
+            text-align: center;
+            margin-bottom: 30px;
+            max-width: 80%;
+            line-height: 1.4;
+            text-shadow: 0 0 15px #957DAD;
+        }
+
+        .confetti-close {
+            background-color: #CC2936;
+            color: #FFFFFF;
+            border: none;
+            padding: 12px 25px;
+            font-size: 1.2em;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .confetti-close:hover {
+            background-color: #A61D2A;
+        }
+
+        /* Confetti particles - basic example, requires more complex JS for animation */
+        .confetti {
+            position: absolute;
+            background-color: #CC2936; /* Red */
+            border-radius: 50%;
+            animation: fall 3s linear infinite;
+            opacity: 0;
+        }
+
+        .confetti:nth-child(2n) { background-color: #6F2DBD; } /* Purple */
+        .confetti:nth-child(3n) { background-color: #E0BBE4; } /* Light Purple */
+        .confetti:nth-child(4n) { background-color: #957DAD; } /* Medium Purple */
+        .confetti:nth-child(5n) { background-color: #FFC0CB; } /* Pink */
+        .confetti:nth-child(6n) { background-color: #CC2936; } /* Red */
+        .confetti:nth-child(7n) { background-color: #FFFF00; } /* Yellow */
+        .confetti:nth-child(8n) { background-color: #00FF00; } /* Green */
+
+        @keyframes fall {
+            0% { transform: translateY(-100px) rotateZ(0deg); opacity: 0; }
+            10% { opacity: 1; }
+            100% { transform: translateY(100vh) rotateZ(720deg); opacity: 0; }
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 1000px) {
+            .countdown-card {
+                max-width: 100%;
+            }
+            .subject-cards-container {
+                flex-direction: column;
+                align-items: center;
+            }
+            .subject-card {
+                max-width: 80%;
+                margin-bottom: 20px;
+            }
+            .confetti-quote {
                 font-size: 2.2em;
-                margin-top: 40px;
             }
+        }
 
-            h2 {
+        @media (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+            h1 {
                 font-size: 2em;
             }
-
-            .card {
-                width: 100%;
-                padding: 25px;
+            .countdown-timer {
+                font-size: 2em;
             }
-
-            .card h3 {
-                font-size: 1.6em;
+            .countdown-card, .subject-card {
+                padding: 20px;
+                min-width: unset;
+                max-width: 95%;
             }
-
-            .quote {
-                font-size: 1.1em;
+            .subject-card h3 {
+                font-size: 1.4em;
+            }
+            .subject-card li {
+                font-size: 1em;
+            }
+            .motivation-button {
+                font-size: 1.2em;
+                padding: 15px 25px;
+            }
+            .confetti-quote {
+                font-size: 1.8em;
             }
         }
     </style>
 </head>
 <body>
-    <main>
-        <h1>Asli Rob, Asli Fitness</h1>
 
-        <section id="workout-plans">
-            <h2>Workout Plans</h2>
-            <div class="card-container">
-                <div class="card">
-                    <h3>Strength</h3>
-                    <p>Build raw power, increase muscle mass, and develop a foundation of unbreakable strength with our specialized programs.</p>
-                    <button class="glow-button">Learn More</button>
-                </div>
-                <div class="card">
-                    <h3>Endurance</h3>
-                    <p>Enhance your stamina, improve cardiovascular health, and push your limits with high-intensity, sustained workouts.</p>
-                    <button class="glow-button">Learn More</button>
-                </div>
-                <div class="card">
-                    <h3>Agility</h3>
-                    <p>Master quick movements, improve coordination, and boost your reaction time with dynamic and responsive training routines.</p>
-                    <button class="glow-button">Learn More</button>
-                </div>
+    <div class="dashboard-header">
+        <h1>🚀 Mission IIT 2028 Dashboard 🎯</h1>
+        <h2>Your personalized roadmap to success!</h2>
+    </div>
+
+    <div class="countdown-container">
+        <div class="countdown-card">
+            <h2>Class 10 Board Exams</h2>
+            <div id="board-exam-timer" class="countdown-timer">
+                <span id="board-days">00</span>D
+                <span id="board-hours">00</span>H
+                <span id="board-minutes">00</span>M
+                <span id="board-seconds">00</span>S
             </div>
-        </section>
-    </main>
+        </div>
+        <div class="countdown-card">
+            <h2>JEE Main 2028</h2>
+            <div id="jee-main-timer" class="countdown-timer">
+                <span id="jee-days">00</span>D
+                <span id="jee-hours">00</span>H
+                <span id="jee-minutes">00</span>M
+                <span id="jee-seconds">00</span>S
+            </div>
+        </div>
+    </div>
 
-    <footer>
-        <p class="quote">"Mehnat itni karo ki kismat bhi bol uthe, le bhai yo toh tera hak h'"</p>
-    </footer>
+    <div class="subject-cards-container">
+        <div class="subject-card">
+            <h3>Physics</h3>
+            <ul>
+                <li>Kinematics & Dynamics</li>
+                <li>Work, Energy & Power</li>
+                <li>Electrostatics</li>
+                <li>Current Electricity</li>
+                <li>Wave Optics</li>
+                <li>Modern Physics Basics</li>
+            </ul>
+        </div>
+        <div class="subject-card">
+            <h3>Chemistry</h3>
+            <ul>
+                <li>Atomic Structure</li>
+                <li>Chemical Bonding</li>
+                <li>Periodic Classification</li>
+                <li>Stoichiometry</li>
+                <li>Organic Chemistry Basics</li>
+                <li>Chemical Equilibrium</li>
+            </ul>
+        </div>
+        <div class="subject-card">
+            <h3>Maths</h3>
+            <ul>
+                <li>Quadratic Equations</li>
+                <li>Arithmetic & Geometric Progressions</li>
+                <li>Trigonometry Foundations</li>
+                <li>Coordinate Geometry Basics</li>
+                <li>Sets, Relations & Functions</li>
+                <li>Matrices & Determinants</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="motivation-section">
+        <button class="motivation-button" onclick="showMotivation()">Get Motivated!</button>
+    </div>
+
+    <div id="confetti-overlay" class="confetti-overlay">
+        <h2 class="confetti-quote">"Hard work beats talent when talent doesn't work hard."</h2>
+        <button class="confetti-close" onclick="hideMotivation()">Got it!</button>
+    </div>
+
+    <script>
+        // Set the target dates
+        const boardExamDate = new Date('2026-03-15T09:00:00'); // Assuming Class 10 Board in March 2026
+        const jeeMainDate = new Date('2028-01-20T09:00:00'); // Assuming JEE Main in Jan 2028
+
+        function updateCountdown(targetDate, daysId, hoursId, minutesId, secondsId) {
+            const now = new Date().getTime();
+            const distance = targetDate - now;
+
+            if (distance < 0) {
+                document.getElementById(daysId).innerText = "EXPIRED";
+                document.getElementById(hoursId).innerText = "";
+                document.getElementById(minutesId).innerText = "";
+                document.getElementById(secondsId).innerText = "";
+                return;
+            }
+
+            const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+            document.getElementById(daysId).innerText = String(days).padStart(2, '0');
+            document.getElementById(hoursId).innerText = String(hours).padStart(2, '0');
+            document.getElementById(minutesId).innerText = String(minutes).padStart(2, '0');
+            document.getElementById(secondsId).innerText = String(seconds).padStart(2, '0');
+        }
+
+        // Update both timers every second
+        setInterval(() => {
+            updateCountdown(boardExamDate, 'board-days', 'board-hours', 'board-minutes', 'board-seconds');
+            updateCountdown(jeeMainDate, 'jee-days', 'jee-hours', 'jee-minutes', 'jee-seconds');
+        }, 1000);
+
+        // Initial call to display immediately
+        updateCountdown(boardExamDate, 'board-days', 'board-hours', 'board-minutes', 'board-seconds');
+        updateCountdown(jeeMainDate, 'jee-days', 'jee-hours', 'jee-minutes', 'jee-seconds');
+
+
+        // Confetti effect logic
+        const confettiOverlay = document.getElementById('confetti-overlay');
+
+        function createConfetti() {
+            const confetti = document.createElement('div');
+            confetti.classList.add('confetti');
+            confetti.style.width = Math.random() * 10 + 5 + 'px';
+            confetti.style.height = confetti.style.width;
+            confetti.style.left = Math.random() * 100 + 'vw';
+            confetti.style.animationDelay = Math.random() * 2 + 's';
+            confetti.style.animationDuration = Math.random() * 3 + 2 + 's';
+            confetti.style.opacity = Math.random();
+            confettiOverlay.appendChild(confetti);
+
+            setTimeout(() => {
+                confetti.remove();
+            }, parseFloat(confetti.style.animationDuration) * 1000);
+        }
+
+        let confettiInterval;
+
+        function showMotivation() {
+            confettiOverlay.classList.add('active');
+            // Start generating confetti particles
+            confettiInterval = setInterval(createConfetti, 100); // Create a new confetti every 100ms for a burst
+            setTimeout(() => {
+                clearInterval(confettiInterval); // Stop generating after a short burst
+            }, 2000); // Stop after 2 seconds
+        }
+
+        function hideMotivation() {
+            confettiOverlay.classList.remove('active');
+            clearInterval(confettiInterval); // Ensure no more confetti is generated
+            // Remove existing confetti particles
+            const existingConfetti = confettiOverlay.querySelectorAll('.confetti');
+            existingConfetti.forEach(c => c.remove());
+        }
+    </script>
 </body>
 </html>
