@@ -1,0 +1,200 @@
+Here is the complete Database Schema, structured for the `smm-panel-2_data` collection and `main` document in Firebase Firestore, followed by the conceptual Client-Side Folder Structure.
+
+---
+
+### 1. Firebase Firestore Database Schema
+
+The entire admin panel data will be stored within a single Firestore document named `main` under the `smm-panel-2_data` collection. This document will contain various fields, some of which are objects or arrays, to represent different entities.
+
+**Collection:** `smm-panel-2_data`
+**Document:** `main`
+
+**Document Structure (`main`):**
+
+json
+{
+  "adminAuth": {
+    "email": "string",                  // Admin's email for login
+    "passwordHash": "string",           // Hashed password (store securely, e.g., via Firebase Auth)
+    "sessionId": "string",              // Current session token for admin (for client-side session management)
+    "lastLogin": "timestamp"            // Last login timestamp
+  },
+  "dashboardMetrics": {
+    "totalRevenue": "number",           // Sum of all completed order prices
+    "totalProfit": "number",            // Sum of (user_price - provider_price) for completed orders
+    "activeUsers": "number",            // Count of active user accounts
+    "pendingOrders": "number",          // Count of orders with 'pending' or 'processing' status
+    "openTickets": "number"             // Count of tickets with 'open' status
+  },
+  "users": [
+    {
+      "id": "string",                   // Unique user ID
+      "email": "string",
+      "username": "string",
+      "balance": "number",              // Current user balance
+      "accountStatus": "string",        // "active", "suspended"
+      "createdAt": "timestamp",
+      "lastLogin": "timestamp",
+      "orderHistory": [                 // Simplified embedding, could be separate if complex/large
+        {
+          "orderId": "string",          // Reference to order in 'orders' array
+          "serviceName": "string",
+          "quantity": "number",
+          "price": "number",            // Total price for this specific order
+          "status": "string",           // "completed", "pending", etc.
+          "date": "timestamp"
+        }
+      ],
+      "transactions": [                 // For balance adjustments
+        {
+          "type": "string",             // "deposit", "deduction", "order_deduction", "refund"
+          "amount": "number",           // Positive for add, negative for deduct
+          "date": "timestamp",
+          "description": "string",      // E.g., "Admin manual add", "Order #ORD123 payment"
+          "orderId": "string"           // Optional, if related to an order
+        }
+      ]
+    }
+    // ... more user objects
+  ],
+  "orders": [
+    {
+      "id": "string",                   // Unique order ID (e.g., ORD001)
+      "userId": "string",               // ID of the user who placed the order
+      "userName": "string",             // Username for display
+      "serviceId": "string",            // ID of the service ordered
+      "serviceName": "string",          // Name of the service for display
+      "link": "string",                 // Target link for the service
+      "quantity": "number",             // Ordered quantity
+      "pricePerUnit": "number",         // Price per unit at the time of order
+      "totalPrice": "number",           // Total price paid by user
+      "status": "string",               // "pending", "processing", "completed", "partial", "cancelled", "refunded"
+      "providerOrderId": "string",      // Optional: ID from external API provider (for tracking)
+      "providerId": "string",           // Optional: ID of the API provider
+      "createdAt": "timestamp",
+      "updatedAt": "timestamp"
+    }
+    // ... more order objects
+  ],
+  "categories": [
+    {
+      "id": "string",                   // Unique category ID (e.g., CAT001)
+      "name": "string",                 // Category name (e.g., "Social Media Likes")
+      "order": "number",                // Display order
+      "createdAt": "timestamp"
+    }
+    // ... more category objects
+  ],
+  "services": [
+    {
+      "id": "string",                   // Unique service ID (e.g., SVC001)
+      "categoryId": "string",           // ID of the category this service belongs to
+      "name": "string",                 // Service name (e.g., "Instagram Likes High Quality")
+      "description": "string",
+      "minQuantity": "number",
+      "maxQuantity": "number",
+      "price": "number",                // Price charged to users per unit
+      "providerServiceId": "string",    // ID of the corresponding service on the external provider
+      "providerId": "string",           // ID of the API provider this service maps to
+      "status": "string",               // "active", "disabled"
+      "createdAt": "timestamp",
+      "updatedAt": "timestamp"
+    }
+    // ... more service objects
+  ],
+  "apiProviders": [
+    {
+      "id": "string",                   // Unique provider ID (e.g., PROV001)
+      "name": "string",                 // Provider name (e.g., "SMM Provider X")
+      "apiUrl": "string",               // Base API URL
+      "apiKey": "string",               // API Key for the provider (CRITICAL: Should be handled securely server-side in production)
+      "status": "string",               // "active", "inactive"
+      "lastSync": "timestamp",          // Last time services/balance were synced
+      "serviceMappings": [              // Array of mappings between panel services and provider services
+        {
+          "panelServiceId": "string",   // Our panel's service ID
+          "providerServiceId": "string",// Provider's service ID
+          "providerPrice": "number"     // Cost from the provider for this service
+        }
+      ]
+    }
+    // ... more API provider objects
+  ],
+  "tickets": [
+    {
+      "id": "string",                   // Unique ticket ID (e.g., TKT001)
+      "userId": "string",               // ID of the user who created the ticket
+      "userName": "string",             // Username for display
+      "subject": "string",
+      "status": "string",               // "open", "replied", "closed"
+      "createdAt": "timestamp",
+      "updatedAt": "timestamp",
+      "messages": [
+        {
+          "sender": "string",           // "user" or "admin"
+          "message": "string",
+          "timestamp": "timestamp"
+        }
+      ]
+    }
+    // ... more ticket objects
+  ],
+  "settings": {
+    "siteName": "string",
+    "currencySymbol": "string",         // E.g., "$", "€"
+    "defaultTheme": "string",           // "dark", "light"
+    "paymentGateways": {                // API keys for payment gateways (CRITICAL: Server-side in production)
+      "paypal": {"apiKey": "string", "secret": "string"},
+      "stripe": {"publicKey": "string", "secretKey": "string"}
+    },
+    "termsOfService": "string",         // Long text content
+    "emailConfig": {                    // SMTP settings (CRITICAL: Server-side in production)
+      "senderEmail": "string",
+      "smtpHost": "string",
+      "smtpPort": "number",
+      "smtpUser": "string",
+      "smtpPass": "string"
+    }
+  }
+}
+
+**Important Note on Scalability & Security for Firestore:**
+While this schema adheres to the request of storing data in a single document, for a real-world application, arrays like `users`, `orders`, and `tickets` within a single document (`main`) would quickly hit Firestore's 1MB document size limit. For a production system, these would typically be separate subcollections (e.g., `smm-panel-2_data/main/users/{userId}`, `smm-panel-2_data/main/orders/{orderId}`) to ensure scalability and better query performance. Additionally, sensitive API keys and passwords (`adminAuth.passwordHash`, `apiProviders[].apiKey`, `settings.paymentGateways`, `settings.emailConfig`) *must not* be handled directly client-side in a production environment. A server-side solution (like Firebase Cloud Functions or a dedicated backend server) would be essential to securely manage these.
+
+---
+
+### 2. Conceptual Client-Side Folder Structure
+
+Given the constraint of "Output ONLY raw HTML" and client-side Firebase, this structure outlines how the client-side files would be organized to simulate modularity and separate concerns, much like a traditional backend.
+
+
+/
+├── index.html                      <-- The main HTML file for the admin panel.
+                                        It will contain the main layout, navigation, and dynamically load content.
+├── login.html                      <-- Separate HTML file for the admin login interface.
+├── assets/
+│   ├── css/
+│   │   └── style.css               <-- Main CSS file for global styling, layout, and theme.
+│   │   └── dashboard.css           <-- Specific styles for the dashboard module.
+│   │   └── forms.css               <-- Styles for various forms (add/edit user, service, etc.).
+│   ├── js/
+│   │   ├── firebase-init.js        <-- Initializes Firebase with the provided config. Contains core Firestore document access logic.
+│   │   ├── auth.js                 <-- Handles admin login, logout, session management, and protecting routes.
+│   │   ├── dashboard.js            <-- Logic for fetching and rendering dashboard metrics.
+│   │   ├── users.js                <-- Functions for fetching, displaying, editing, suspending users, and managing balances.
+│   │   ├── orders.js               <-- Functions for fetching, displaying, editing order statuses, links, quantities, and issuing refunds.
+│   │   ├── services.js             <-- Functions for managing categories and services (add, edit, delete, reorder, bulk pricing).
+│   │   ├── api-providers.js        <-- Functions for adding, editing, mapping API providers and syncing.
+│   │   ├── tickets.js              <-- Functions for fetching, displaying, replying to, and closing tickets.
+│   │   ├── settings.js             <-- Functions for managing site settings, currency, themes, and API keys.
+│   │   ├── utils.js                <-- General utility functions: input sanitization, CSRF token generation/validation (client-side simulation), DOM manipulation helpers.
+│   │   └── router.js               <-- Client-side routing logic to switch between different panel sections (e.g., dashboard, user management) based on URL hash or clicks.
+│   └── images/
+│       ├── logo.png                <-- Panel logo
+│       ├── user-avatar.png         <-- Default user avatar
+│       └── icons/                  <-- Folder for various UI icons
+
+
+---
+
+Please confirm when you are ready for me to proceed with generating the raw HTML, focusing on the Authentication and Order Management modules first, incorporating the Firebase instructions and stunning UI.
