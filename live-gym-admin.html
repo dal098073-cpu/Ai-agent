@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hacker-Style Admin Panel</title>
+
+    <!-- CRITICAL FIREBASE SCRIPTS - DO NOT MODIFY -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
+    <style>
+        /* Import Google Font for monospace style */
+        @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+
+        /* CSS Variables for easy theme customization */
+        :root {
+            --bg-color: #0d1117; /* Dark GitHub-like background */
+            --container-bg-color: #161b22; /* Slightly lighter dark for container */
+            --primary-color: #00ff00; /* Neon green */
+            --secondary-color: #00ffff; /* Neon cyan */
+            --text-color: #e6e6e6; /* Light gray for general text */
+            --border-color: #388e3c; /* Darker green for subtle borders */
+            --glow-primary-spread: 0 0 10px var(--primary-color), 0 0 20px var(--primary-color);
+            --font-mono: 'Share Tech Mono', monospace;
+        }
+
+        /* Base styles for the body */
+        body {
+            font-family: var(--font-mono);
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start; /* Align to top for better content flow */
+            min-height: 100vh;
+            overflow-x: hidden;
+            /* Subtle grid pattern for hacker feel */
+            background-image:
+                linear-gradient(rgba(0, 255, 0, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 255, 0, 0.05) 1px, transparent 1px);
+            background-size: 50px 50px;
+        }
+
+        /* Scanline effect for the entire body */
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none; /* Allows interaction with elements below */
+            background: repeating-linear-gradient(
+                to bottom,
+                transparent 0%,
+                rgba(0, 0, 0, 0.1) 1px,
+                transparent 2px
+            );
+            z-index: -1; /* Behind other content */
+            opacity: 0.1; /* Subtle visibility */
+        }
+
+        /* Main container for the admin panel */
+        .container {
+            background-color: var(--container-bg-color);
+            border: 1px solid var(--border-color);
+            box-shadow: var(--glow-primary-spread); /* Primary green glow */
+            padding: 30px;
+            border-radius: 8px;
+            width: 100%;
+            max-width: 600px; /* Max width for better readability */
+            box-sizing: border-box; /* Include padding/border in element's total width/height */
+            position: relative;
+            animation: fadeIn 1s ease-out forwards; /* Fade-in animation on load */
+        }
+
+        /* Keyframe animation for container fade-in */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Header section styling */
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            position: relative;
+        }
+
+        /* Glitch effect for the main heading */
+        .header h1 {
+            color: transparent; /* Make base text transparent, visible text will come from pseudo-elements */
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            letter-spacing: 2px;
+            position: relative;
+            text-align: center;
+            user-select: none; /* Prevent selection of glitch layers */
+        }
+
+        /* Pseudo-elements for the glitch effect layers */
+        .header h1::before,
+        .header h1::after {
+            content: attr(data-text); /* Pull text from data-text attribute */
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--container-bg-color); /* Hide parts of underlying text */
+            overflow: hidden; /* Critical for clip property to work */
+            text-align: center;
+            box-sizing: border-box;
+            line-height: 1.5; /* Ensure line-height matches h1 for proper alignment */
+            display: block; /* Ensure full width/height for clipping */
+        }
+
+        /* First glitch layer (::before) */
+        .header h1::before {
+            left: -2px; /* Offset to the left */
+            color: var(--secondary-color); /* Cyan color */
+            text-shadow: 1px 0 var(--secondary-color), 0 0 10px var(--secondary-color); /* Text shadow for glow */
+            animation: glitch-anim 2.5s infinite linear alternate-reverse; /* Glitch animation */
+        }
+
+        /* Second glitch layer (::after) */
+        .header h1::after {
+            left: 2px; /* Offset to the right */
+            color: var(--primary-color); /* Green color */
+            text-shadow: -1px 0 var(--primary-color), 0 0 10px var(--primary-color); /* Text shadow for glow */
+            animation: glitch-anim-2 2.5s infinite linear alternate-reverse; /* Second glitch animation */
+        }
+
+        /* Keyframe animation for the first glitch layer */
+        @keyframes glitch-anim {
+            0% { clip: rect(10px, 9999px, 80px, 0); }
+            10% { clip: rect(90px, 9999px, 30px, 0); }
+            20% { clip: rect(10px, 9999px, 80px, 0); }
+            30% { clip: rect(10px, 9999px, 30px, 0); }
+            40% { clip: rect(90px, 9999px, 80px, 0); }
+            50% { clip: rect(10px, 9999px, 30px, 0); }
+            60% { clip: rect(90px, 9999px, 80px, 0); }
+            70% { clip: rect(10px, 9999px, 30px, 0); }
+            80% { clip: rect(90px, 9999px, 80px, 0); }
+            90% { clip: rect(10px, 9999px, 30px, 0); }
+            100% { clip: rect(90px, 9999px, 80px, 0); }
+        }
+
+        /* Keyframe animation for the second glitch layer */
+        @keyframes glitch-anim-2 {
+            0% { clip: rect(60px, 9999px, 20px, 0); }
+            10% { clip: rect(10px, 9999px, 70px, 0); }
+            20% { clip: rect(60px, 9999px, 20px, 0); }
+            30% { clip: rect(10px, 9999px, 70px, 0); }
+            40% { clip: rect(60px, 9999px, 20px, 0); }
+            50% { clip: rect(10px, 9999px, 70px, 0); }
+            60% { clip: rect(60px, 9999px, 20px, 0); }
+            70% { clip: rect(10px, 9999px, 70px, 0); }
+            80% { clip: rect(60px, 9999px, 20px, 0); }
+            90% { clip: rect(10px, 9999px, 70px, 0); }
+            100% { clip: rect(60px, 9999px, 20px, 0); }
+        }
+
+        /* Subtitle styling */
+        .header p {
+            color: var(--secondary-color);
+            font-size: 0.9em;
+            text-shadow: 0 0 5px var(--secondary-color);
+        }
+
+        /* Styling for form groups (label + input) */
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--secondary-color);
+            font-size: 1.1em;
+            text-shadow: 0 0 3px var(--secondary-color);
+        }
+
+        /* Styling for input fields */
+        .form-group input[type="text"],
+        .form-group input[type="number"] {
+            width: calc(100% - 24px); /* Full width minus padding */
+            padding: 12px;
+            background-color: #0d1117; /* Dark input background */
+            border: 1px solid var(--border-color);
+            color: var(--primary-color); /* Neon green text */
+            font-family: var(--font-mono);
+            font-size: 1em;
+            border-radius: 4px;
+            box-shadow: inset 0 0 5px rgba(0, 255, 0, 0.3); /* Inner glow */
+            transition: all 0.3s ease;
+        }
+
+        /* Focus state for input fields */
+        .form-group input[type="text"]:focus,
+        .form-group input[type="number"]:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 8px rgba(0, 255, 0, 0.7), inset 0 0 5px rgba(0, 255, 0, 0.5); /* Stronger glow on focus */
+        }
+
+        /* Styling for the deploy button */
+        .deploy-button {
+            width: 100%;
+            padding: 18px;
+            background-color: var(--primary-color);
+            color: var(--bg-color); /* Dark text on bright button */
+            font-family: var(--font-mono);
+            font-size: 1.4em;
+            font-weight: bold;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            box-shadow: var(--glow-primary-spread); /* Green glow */
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+        }
+
+        /* Hover state for the deploy button */
+        .deploy-button:hover:not(:disabled) {
+            background-color: #00e600; /* Slightly brighter green */
+            box-shadow: 0 0 15px #00ff00, 0 0 30px #00ff00, 0 0 45px #00ff00; /* Enhanced glow */
+            transform: translateY(-2px); /* Slight lift effect */
+        }
+
+        /* Active state for the deploy button */
+        .deploy-button:active:not(:disabled) {
+            transform: translateY(0);
+            box-shadow: 0 0 5px var(--primary-color); /* Reduced glow on press */
+        }
+
+        /* Disabled state for the deploy button */
+        .deploy-button:disabled {
+            background-color: #555;
+            cursor: not-allowed;
+            box-shadow: none;
+            color: #ccc;
+        }
+
+        /* Styling for the success message */
+        .success-message {
+            margin-top: 25px;
+            padding: 15px;
+            background-color: rgba(0, 255, 0, 0.2); /* Semi-transparent green background */
+            color: var(--primary-color);
+            border: 1px solid var(--primary-color);
+            border-radius: 5px;
+            text-align: center;
+            font-size: 1.1em;
+            opacity: 0; /* Initially hidden */
+            visibility: hidden;
+            transition: opacity 0.5s ease, visibility 0.5s ease;
+            box-shadow: var(--glow-primary-spread);
+        }
+
+        /* Class to show the success message */
+        .success-message.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* Styling for the status icon within the success message */
+        .status-icon {
+            margin-right: 8px;
+            font-size: 1.2em;
+            vertical-align: middle;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <!-- Main heading with glitch effect. data-text holds the actual text content for pseudo-elements. -->
+            <h1 data-text="// GYM ADMIN CONSOLE //">// GYM ADMIN CONSOLE //</h1>
+            <p>ACCESS GRANTED - SYSTEM ONLINE - [CODE: DELTA-42]</p>
+        </div>
+
+        <!-- Input field for Workout of the Day -->
+        <div class="form-group">
+            <label for="workoutOfTheDay">Workout of the Day:</label>
+            <input type="text" id="workoutOfTheDay" placeholder="e.g., Deadlifts, Squats, Bench Press" required>
+        </div>
+
+        <!-- Input field for Highest Reps -->
+        <div class="form-group">
+            <label for="highestReps">Highest Reps:</label>
+            <input type="number" id="highestReps" placeholder="e.g., 120 (for 120kg/lbs)" required>
+        </div>
+
+        <!-- Deploy button -->
+        <button id="deployButton" class="deploy-button">DEPLOY TO CLOUD</button>
+
+        <!-- Success message (initially hidden) -->
+        <div id="successMessage" class="success-message">
+            <span class="status-icon">✅</span> Data successfully deployed to cloud! System integrity: OK.
+        </div>
+    </div>
+
+    <script>
+        // CRITICAL FIREBASE CONFIGURATION - DO NOT MODIFY
+        const firebaseConfig = {
+            apiKey: "AIzaSyASm3_DewrSoTXaNE_GoG9LxoSI15q0EY8",
+            authDomain: "auto-35527.firebaseapp.com",
+            projectId: "auto-35527",
+            storageBucket: "auto-35527.firebasestorage.app",
+            messagingSenderId: "82228269253",
+            appId: "1:82228269253:web:0bd872188d135462aae0ac"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // Get references to DOM elements
+        const workoutOfTheDayInput = document.getElementById('workoutOfTheDay');
+        const highestRepsInput = document.getElementById('highestReps');
+        const deployButton = document.getElementById('deployButton');
+        const successMessage = document.getElementById('successMessage');
+
+        /**
+         * Shows the success message and automatically hides it after a few seconds.
+         */
+        function showSuccessMessage() {
+            successMessage.classList.add('show');
+            setTimeout(() => {
+                successMessage.classList.remove('show');
+            }, 5000); // Hide after 5 seconds
+        }
+
+        /**
+         * Fetches current data from Firestore and pre-fills the input fields.
+         * This makes the panel useful for modifying existing data.
+         */
+        async function loadCurrentData() {
+            try {
+                const docRef = db.collection('live-gym_data').doc('main');
+                const doc = await docRef.get();
+
+                if (doc.exists) {
+                    const data = doc.data();
+                    workoutOfTheDayInput.value = data.workoutOfTheDay || '';
+                    // Convert number to string for input value
+                    highestRepsInput.value = data.highestReps !== undefined ? String(data.highestReps) : '';
+                } else {
+                    console.log("No existing document for 'main' in 'live-gym_data'. Initializing with empty fields.");
+                }
+            } catch (error) {
+                console.error('ERROR LOADING DATA: ', error);
+                alert('DATA RETRIEVAL FAILED: Could not load current data from cloud. Check console for details.');
+            }
+        }
+
+        // Add event listener to the deploy button
+        deployButton.addEventListener('click', async () => {
+            const workoutOfTheDay = workoutOfTheDayInput.value.trim();
+            const highestReps = highestRepsInput.value.trim();
+
+            // Basic input validation
+            if (!workoutOfTheDay || !highestReps) {
+                alert('ERROR: Input fields cannot be empty. Please enter data for both fields.');
+                return;
+            }
+
+            // Disable button and update text for user feedback during deployment
+            deployButton.disabled = true;
+            deployButton.textContent = 'DEPLOYING...';
+
+            try {
+                // Save data to Firestore
+                await db.collection('live-gym_data').doc('main').set({
+                    workoutOfTheDay: workoutOfTheDay,
+                    highestReps: parseInt(highestReps, 10), // Ensure highestReps is stored as a number
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp() // Add a server-generated timestamp
+                });
+
+                console.log('Document successfully written!');
+                showSuccessMessage(); // Show success message on successful save
+
+                // Optional: Clear fields after successful save
+                // workoutOfTheDayInput.value = '';
+                // highestRepsInput.value = '';
+
+            } catch (error) {
+                console.error('ERROR WRITING DOCUMENT: ', error);
+                alert('DEPLOYMENT FAILED: Error saving data to cloud. See console for details.');
+            } finally {
+                // Re-enable button and restore original text
+                deployButton.disabled = false;
+                deployButton.textContent = 'DEPLOY TO CLOUD';
+            }
+        });
+
+        // Load existing data when the page loads
+        window.onload = loadCurrentData;
+    </script>
+</body>
+</html>
