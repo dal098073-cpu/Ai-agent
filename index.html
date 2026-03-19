@@ -3,96 +3,80 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Agent Dashboard</title>
+    <title>Gtg - Gotta Go!</title>
     <style>
-        body { background: #0d1117; color: #c9d1d9; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; padding: 20px; }
-        .container { width: 100%; max-width: 500px; background: #161b22; padding: 20px; border-radius: 12px; border: 1px solid #30363d; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        h1 { color: #58a6ff; font-size: 24px; text-align: center; }
-        textarea { width: 100%; height: 120px; background: #0d1117; color: #fff; border: 1px solid #30363d; border-radius: 8px; padding: 10px; box-sizing: border-box; font-size: 16px; margin-bottom: 15px; }
-        input { width: 100%; padding: 10px; margin-bottom: 10px; background: #0d1117; color: #fff; border: 1px solid #30363d; border-radius: 5px; box-sizing: border-box;}
-        button { width: 100%; padding: 15px; background: #238636; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-bottom: 10px; }
-        .settings { background: #0d1117; padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #30363d;}
-        #status { font-size: 14px; text-align: center; color: #8b949e; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #e0f2f7; /* Light blue background */
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            text-align: center;
+        }
+        .container {
+            background-color: #ffffff;
+            padding: 50px 70px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            max-width: 700px;
+            width: 90%;
+            border: 1px solid #c0e0e8;
+        }
+        h1 {
+            color: #007bff; /* Blue heading */
+            margin-bottom: 25px;
+            font-size: 3.5em;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+        p {
+            font-size: 1.3em;
+            line-height: 1.8;
+            margin-bottom: 30px;
+        }
+        .action-button {
+            display: inline-block;
+            background-color: #28a745; /* Green button */
+            color: white;
+            padding: 15px 30px;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 1.1em;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            border: none;
+            cursor: pointer;
+        }
+        .action-button:hover {
+            background-color: #218838;
+            transform: translateY(-2px);
+        }
+        .action-button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+        footer {
+            margin-top: 40px;
+            font-size: 0.9em;
+            color: #777;
+        }
     </style>
 </head>
 <body>
-
-<div class="container">
-    <h1>🚀 AI site  daksh Builder</h1>
-    
-    <div class="settings">
-        <p style="margin-top:0; font-size: 12px; color: #8b949e;">🔑 Enter your keys here (They save securely to your browser, not the server)</p>
-        <input type="password" id="geminiInput" placeholder="Gemini API Key">
-        <input type="password" id="ghInput" placeholder="GitHub Token">
-        <button style="background: #1f6feb; padding: 10px;" onclick="saveKeys()">Save Keys Locally</button>
+    <div class="container">
+        <h1>Gtg!</h1>
+        <p>It's been a fun ride, but all good things must come to an end.</p>
+        <p>Time to pack up and head out for new adventures. See you around!</p>
+        <button class="action-button" onclick="alert('Farewell! Hope to see you again soon!');">Acknowledge Departure</button>
     </div>
-
-    <textarea id="prompt" placeholder="Tell the AI what to build..."></textarea>
-    <button onclick="runAgent()">GENERATE & DEPLOY</button>
-    <div id="status">System Standby...</div>
-</div>
-
-<script>
-    // Load keys from browser storage when the page opens
-    window.onload = function() {
-        if(localStorage.getItem("geminiKey")) document.getElementById('geminiInput').value = localStorage.getItem("geminiKey");
-        if(localStorage.getItem("ghToken")) document.getElementById('ghInput').value = localStorage.getItem("ghToken");
-    }
-
-    function saveKeys() {
-        localStorage.setItem("geminiKey", document.getElementById('geminiInput').value);
-        localStorage.setItem("ghToken", document.getElementById('ghInput').value);
-        alert("Keys saved to your phone's browser!");
-    }
-
-    async function runAgent() {
-        const prompt = document.getElementById('prompt').value;
-        const status = document.getElementById('status');
-        const GEMINI_KEY = localStorage.getItem("geminiKey");
-        const GH_TOKEN = localStorage.getItem("ghToken");
-        
-        const REPO_OWNER = "dal098073-cpu"; // Your username
-        const REPO_NAME = "Ai-agent";       // Your repo
-
-        if(!prompt || !GEMINI_KEY || !GH_TOKEN) return alert("Missing prompt or keys!");
-
-        status.innerText = "🧠 AI is thinking...";
-
-        try {
-            const aiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`, {
-                method: "POST",
-                body: JSON.stringify({ contents: [{ parts: [{ text: `Write the full HTML code for a website based on this request: ${prompt}. Only output the code, no markdown or text.` }] }] })
-            });
-            const data = await aiResponse.json();
-            const newCode = data.candidates[0].content.parts[0].text.replace(/```html|```/g, "").trim();
-
-            status.innerText = "💾 Pushing to GitHub...";
-
-            const getFile = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/index.html`, {
-                headers: { "Authorization": `token ${GH_TOKEN}` }
-            });
-            const fileData = await getFile.json();
-
-            const updateFile = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/index.html`, {
-                method: "PUT",
-                headers: { "Authorization": `token ${GH_TOKEN}`, "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    message: "AI Agent update",
-                    content: btoa(unescape(encodeURIComponent(newCode))),
-                    sha: fileData.sha
-                })
-            });
-
-            if(updateFile.ok) {
-                status.innerText = "✅ DONE! Refresh the page in 30 seconds.";
-            } else {
-                status.innerText = "❌ GitHub Error. Check your token.";
-            }
-        } catch (e) {
-            status.innerText = "❌ Error: " + e.message;
-        }
-    }
-</script>
-
+    <footer>
+        <p>&copy; 2023 Gtg Adventures. All rights reserved.</p>
+    </footer>
 </body>
 </html>
