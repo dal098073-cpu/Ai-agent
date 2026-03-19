@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Agent Dashboard</title>
+    <title>AI Agent Dashboard - Fixed</title>
     <style>
         body { background: #0d1117; color: #c9d1d9; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; padding: 20px; }
         .container { width: 100%; max-width: 500px; background: #161b22; padding: 20px; border-radius: 12px; border: 1px solid #30363d; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
@@ -19,31 +19,27 @@
 
 <div class="container">
     <h1>🚀 AI Site Builder</h1>
-    
     <div class="settings">
-        <p style="margin-top:0; font-size: 12px; color: #8b949e;">🔑 Enter your keys here (They save securely to your phone, not the server)</p>
+        <p style="margin-top:0; font-size: 12px; color: #8b949e;">🔑 Enter your keys and tap Save:</p>
         <input type="password" id="geminiInput" placeholder="Gemini API Key">
         <input type="password" id="ghInput" placeholder="GitHub Token">
         <button style="background: #1f6feb; padding: 10px;" onclick="saveKeys()">Save Keys Locally</button>
     </div>
-
-    <textarea id="prompt" placeholder="Tell the AI what to build... (e.g. 'Make a red box that says Hello')"></textarea>
+    <textarea id="prompt" placeholder="Tell the AI what to build..."></textarea>
     <button onclick="runAgent()">GENERATE & DEPLOY</button>
     <div id="status">System Standby...</div>
 </div>
 
 <script>
-    // Load keys from browser storage when the page opens
     window.onload = function() {
         if(localStorage.getItem("geminiKey")) document.getElementById('geminiInput').value = localStorage.getItem("geminiKey");
         if(localStorage.getItem("ghToken")) document.getElementById('ghInput').value = localStorage.getItem("ghToken");
     }
 
     function saveKeys() {
-        // .trim() removes any accidental spaces you might copy/paste
         localStorage.setItem("geminiKey", document.getElementById('geminiInput').value.trim());
         localStorage.setItem("ghToken", document.getElementById('ghInput').value.trim());
-        alert("Keys saved to your phone's browser!");
+        alert("Keys saved!");
     }
 
     async function runAgent() {
@@ -51,78 +47,56 @@
         const status = document.getElementById('status');
         const GEMINI_KEY = localStorage.getItem("geminiKey");
         const GH_TOKEN = localStorage.getItem("ghToken");
-        
-        // IMPORTANT: Matches your exact GitHub username and repo
         const REPO_OWNER = "dal098073-cpu"; 
         const REPO_NAME = "Ai-agent";       
 
-        if(!prompt) return alert("Please type a prompt first!");
-        if(!GEMINI_KEY || !GH_TOKEN) return alert("Please enter and save your keys first!");
+        if(!prompt || !GEMINI_KEY || !GH_TOKEN) return alert("Enter prompt and save keys!");
 
-        status.innerText = "🧠 AI is thinking... (This takes a few seconds)";
+        status.innerText = "🧠 AI is thinking...";
 
         try {
-            // 1. Ask Gemini for the code
-            const aiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`, {
+            // UPDATED TO v1 STABLE ENDPOINT
+            const aiResponse = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ 
-                    contents: [{ parts: [{ text: "Write the full HTML code for a single webpage based on this request: " + prompt + ". Only output the raw HTML code, no markdown, no explanations." }] }] 
+                    contents: [{ parts: [{ text: "Write the full HTML code for a single webpage based on: " + prompt + ". Only output the raw HTML, no markdown." }] }] 
                 })
             });
             
             const data = await aiResponse.json();
 
-            // --- THE NEW ERROR CHECKER ---
-            if (data.error) {
-                throw new Error("Gemini API Error: " + data.error.message);
-            }
-            if (!data.candidates || data.candidates.length === 0) {
-                throw new Error("Gemini returned empty. Check your API key or prompt.");
-            }
+            if (data.error) throw new Error("Gemini API Error: " + data.error.message);
             
-            // Extract the code and clean up markdown
             let newCode = data.candidates[0].content.parts[0].text;
             newCode = newCode.replace(/```html|```/gi, "").trim();
 
-            status.innerText = "💾 Pushing code to GitHub...";
+            status.innerText = "💾 Pushing to GitHub...";
 
-            // 2. Get the current file's SHA (GitHub needs this to overwrite the file)
             const getFile = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/index.html`, {
                 headers: { "Authorization": `token ${GH_TOKEN}` }
             });
             const fileData = await getFile.json();
-            
-            if (fileData.message === "Not Found") {
-                throw new Error("GitHub Error: Could not find index.html in your repository.");
-            }
-            if (fileData.message === "Bad credentials") {
-                throw new Error("GitHub Error: Your GitHub token is invalid or expired.");
-            }
 
-            // 3. Push the new code to GitHub
             const updateFile = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/index.html`, {
                 method: "PUT",
                 headers: { "Authorization": `token ${GH_TOKEN}`, "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    message: "AI Agent generated new site",
+                    message: "AI Update",
                     content: btoa(unescape(encodeURIComponent(newCode))),
                     sha: fileData.sha
                 })
             });
 
-            const updateResult = await updateFile.json();
-
             if(updateFile.ok) {
-                status.innerText = "✅ DONE! Refresh this page in about 30 seconds to see your new site.";
+                status.innerText = "✅ DONE! Refresh in 30 seconds.";
             } else {
-                throw new Error("GitHub Push Failed: " + (updateResult.message || "Unknown error"));
+                status.innerText = "❌ GitHub Push Failed.";
             }
         } catch (e) {
             status.innerText = "❌ Error: " + e.message;
         }
     }
 </script>
-
 </body>
 </html>
