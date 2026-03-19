@@ -1,65 +1,248 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>The Red Website</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Haryanvi Calisthenics - Asli Rob, Asli Fitness</title>
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@700&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        body {
-            background-color: #CC0000; /* A strong shade of red */
-            color: #FFFFFF; /* White text for contrast */
-            font-family: Arial, sans-serif;
+        :root {
+            --primary-bg-color: #000000;
+            --secondary-bg-color: #1a1a1a;
+            --accent-color: #FF4500; /* Neon Orange */
+            --text-color-light: #ffffff;
+            --text-color-dark: #333333;
+            --glow-light-orange: rgba(255, 69, 0, 0.7);
+            --glow-dark-orange: rgba(255, 69, 0, 1);
+        }
+
+        /* Basic Reset & Body Styling */
+        * {
+            box-sizing: border-box;
             margin: 0;
-            padding: 20px;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--primary-bg-color);
+            color: var(--text-color-light);
+            text-align: center;
+            line-height: 1.6;
+            overflow-x: hidden; /* Prevent horizontal scroll from glowing elements */
+        }
+
+        /* Main Title Styling */
+        h1 {
+            font-family: 'Oswald', sans-serif;
+            font-size: 4.5em;
+            font-weight: 700;
+            color: var(--accent-color);
+            margin: 80px 20px 40px;
+            text-shadow: 0 0 15px var(--glow-light-orange), 0 0 30px var(--glow-light-orange);
+            letter-spacing: 2px;
+            animation: pulse-glow 2s infinite alternate;
+        }
+
+        @keyframes pulse-glow {
+            from {
+                text-shadow: 0 0 10px var(--glow-light-orange), 0 0 20px var(--glow-light-orange);
+            }
+            to {
+                text-shadow: 0 0 20px var(--glow-dark-orange), 0 0 40px var(--glow-dark-orange);
+            }
+        }
+
+        /* Section Styling */
+        section {
+            padding: 60px 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h2 {
+            font-family: 'Oswald', sans-serif;
+            font-size: 3em;
+            color: var(--text-color-light);
+            margin-bottom: 50px;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+        }
+
+        /* Card Container */
+        .card-container {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 40px;
+        }
+
+        /* Individual Card Styling */
+        .card {
+            background-color: var(--secondary-bg-color);
+            border: 2px solid var(--accent-color);
+            border-radius: 15px;
+            padding: 40px;
+            width: 320px;
+            box-shadow: 0 0 25px var(--glow-light-orange);
+            transition: transform 0.4s ease-in-out, box-shadow 0.4s ease-in-out;
             display: flex;
             flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh; /* Ensure the body takes full viewport height */
-            box-sizing: border-box;
-            text-align: center;
+            justify-content: space-between;
         }
-        .container {
-            background-color: rgba(0, 0, 0, 0.3); /* Slightly transparent dark background for content */
-            padding: 40px;
-            border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
-            max-width: 800px;
+
+        .card:hover {
+            transform: translateY(-15px) scale(1.02);
+            box-shadow: 0 10px 40px var(--glow-dark-orange), 0 0 60px var(--glow-dark-orange);
         }
-        h1 {
-            color: #FFDDDD; /* Lighter red for heading */
-            font-size: 3em;
+
+        .card h3 {
+            font-family: 'Oswald', sans-serif;
+            font-size: 2.2em;
+            color: var(--accent-color);
             margin-bottom: 20px;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            text-shadow: 0 0 8px rgba(255, 69, 0, 0.7);
         }
-        p {
+
+        .card p {
+            font-size: 1.1em;
+            color: #cccccc;
+            margin-bottom: 30px;
+        }
+
+        /* Glow Button Styling */
+        .glow-button {
+            background-color: var(--accent-color);
+            color: var(--primary-bg-color);
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
             font-size: 1.2em;
-            line-height: 1.6;
-            margin-bottom: 15px;
-        }
-        a {
-            color: #FFFF99; /* Yellowish link for contrast */
-            text-decoration: none;
             font-weight: bold;
+            cursor: pointer;
+            outline: none;
+            transition: all 0.3s ease-in-out;
+            box-shadow: 0 0 15px var(--glow-light-orange);
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
-        a:hover {
-            text-decoration: underline;
+
+        .glow-button:hover {
+            background-color: #FF6347; /* Slightly lighter orange on hover */
+            color: var(--text-color-light); /* White text on hover */
+            box-shadow: 0 0 25px var(--glow-dark-orange), 0 0 50px var(--glow-dark-orange), 0 0 75px var(--glow-dark-orange);
+            transform: scale(1.08);
+            text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
         }
-        .footer {
-            margin-top: 40px;
-            font-size: 0.9em;
-            color: #FFEEEE; /* Lighter red for footer text */
+
+        /* Footer and Quote Styling */
+        footer {
+            margin-top: 80px;
+            padding: 50px 20px;
+            background-color: var(--secondary-bg-color);
+            border-top: 3px solid var(--accent-color);
+            box-shadow: 0 -5px 20px var(--glow-light-orange);
+        }
+
+        .quote {
+            font-family: 'Roboto', sans-serif;
+            font-size: 1.6em;
+            font-style: italic;
+            color: var(--text-color-light);
+            max-width: 900px;
+            margin: 0 auto;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+            line-height: 1.8;
+        }
+
+        /* Responsive Adjustments */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 3em;
+                margin-top: 50px;
+            }
+
+            h2 {
+                font-size: 2.5em;
+                margin-bottom: 40px;
+            }
+
+            .card {
+                width: 90%;
+                max-width: 400px;
+                padding: 30px;
+            }
+
+            .card h3 {
+                font-size: 1.8em;
+            }
+
+            .card p {
+                font-size: 1em;
+            }
+
+            .glow-button {
+                padding: 12px 25px;
+                font-size: 1.1em;
+            }
+
+            .quote {
+                font-size: 1.3em;
+            }
+        }
+
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 2.2em;
+                margin-top: 40px;
+            }
+
+            h2 {
+                font-size: 2em;
+            }
+
+            .card {
+                width: 100%;
+                padding: 25px;
+            }
+
+            .card h3 {
+                font-size: 1.6em;
+            }
+
+            .quote {
+                font-size: 1.1em;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Welcome to the Red Domain!</h1>
-        <p>This entire webpage is dedicated to the magnificent colour red. From its vibrant background to the subtle hints in its text, red dominates every pixel you see.</p>
-        <p>Red symbolizes passion, energy, and strength. We've embraced these qualities to bring you a bold and striking web experience.</p>
-        <p>Explore the simplicity and power of a single-colour theme. Thank you for visiting the red side of the internet!</p>
-        <p>If you have any questions, feel free to imagine them in red, too.</p>
-    </div>
-    <div class="footer">
-        <p>&copy; 2023 The Red Website. All rights reserved (in red, of course).</p>
-    </div>
+    <main>
+        <h1>Asli Rob, Asli Fitness</h1>
+
+        <section id="workout-plans">
+            <h2>Workout Plans</h2>
+            <div class="card-container">
+                <div class="card">
+                    <h3>Strength</h3>
+                    <p>Build raw power, increase muscle mass, and develop a foundation of unbreakable strength with our specialized programs.</p>
+                    <button class="glow-button">Learn More</button>
+                </div>
+                <div class="card">
+                    <h3>Endurance</h3>
+                    <p>Enhance your stamina, improve cardiovascular health, and push your limits with high-intensity, sustained workouts.</p>
+                    <button class="glow-button">Learn More</button>
+                </div>
+                <div class="card">
+                    <h3>Agility</h3>
+                    <p>Master quick movements, improve coordination, and boost your reaction time with dynamic and responsive training routines.</p>
+                    <button class="glow-button">Learn More</button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p class="quote">"Mehnat itni karo ki kismat bhi bol uthe, le bhai yo toh tera hak h'"</p>
+    </footer>
 </body>
 </html>
