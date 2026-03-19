@@ -1,427 +1,355 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mission IIT 2028 Dashboard</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #000000;
-            color: #E0BBE4;
+            background-color: #000000; /* Deep black */
+            color: #E0BBE4; /* Light purple for general text */
             margin: 0;
             padding: 20px;
             display: flex;
             flex-direction: column;
             align-items: center;
             min-height: 100vh;
+            box-sizing: border-box;
+            background-image: radial-gradient(circle at center, rgba(80, 0, 80, 0.2) 0%, rgba(0, 0, 0, 1) 70%);
         }
 
-        h1, h2, h3 {
-            color: #957DAD;
-            text-align: center;
+        h1, h2 {
+            color: #D300D3; /* Electric purple */
+            text-shadow: 0 0 10px rgba(211, 0, 211, 0.7);
             margin-bottom: 20px;
         }
 
-        .dashboard-header {
+        .dashboard-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
             width: 100%;
             max-width: 1200px;
-            text-align: center;
-            margin-bottom: 40px;
+            margin-top: 30px;
         }
 
-        .countdown-container {
-            display: flex;
-            justify-content: center;
-            gap: 40px;
-            margin-bottom: 50px;
-            flex-wrap: wrap;
-        }
-
-        .countdown-card {
-            background-color: #1A001A;
-            border: 2px solid #957DAD;
+        .card {
+            background-color: #1A001A; /* Darker purple-black */
+            border: 2px solid #D300D3; /* Electric purple border */
             border-radius: 15px;
-            padding: 25px 35px;
-            text-align: center;
-            box-shadow: 0 0 20px rgba(149, 125, 173, 0.4);
-            flex: 1;
-            min-width: 300px;
-            max-width: 45%;
-            box-sizing: border-box;
+            padding: 25px;
+            box-shadow: 0 0 20px rgba(211, 0, 211, 0.5);
+            transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
         }
 
-        .countdown-card h2 {
+        .card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 0 35px rgba(211, 0, 211, 0.8);
+        }
+
+        .card h3 {
+            color: #FF00FF; /* Brighter electric purple */
             margin-top: 0;
-            color: #E0BBE4;
-            font-size: 1.8em;
             margin-bottom: 15px;
+            text-align: center;
+            text-shadow: 0 0 8px rgba(255, 0, 255, 0.7);
         }
 
-        .countdown-timer {
-            font-size: 2.8em;
-            font-weight: bold;
-            color: #CC2936;
-            letter-spacing: 2px;
-            display: block;
-        }
-
-        .countdown-timer span {
-            display: inline-block;
-            margin: 0 5px;
-            background-color: #3D003D;
-            padding: 8px 15px;
-            border-radius: 8px;
-        }
-
-        .subject-cards-container {
-            display: flex;
-            justify-content: center;
-            gap: 30px;
-            margin-bottom: 50px;
-            flex-wrap: wrap;
-            max-width: 1200px;
-            width: 100%;
-        }
-
-        .subject-card {
-            background-color: #1A001A;
-            border: 2px solid #6F2DBD;
-            border-radius: 15px;
-            padding: 30px;
-            box-shadow: 0 0 15px rgba(111, 45, 189, 0.5);
-            flex: 1;
-            min-width: 280px;
-            max-width: 30%;
-            box-sizing: border-box;
-        }
-
-        .subject-card h3 {
-            color: #E0BBE4;
-            margin-top: 0;
-            font-size: 1.6em;
-            margin-bottom: 20px;
-            border-bottom: 1px dashed #6F2DBD;
-            padding-bottom: 10px;
-        }
-
-        .subject-card ul {
+        .card ul {
             list-style: none;
             padding: 0;
             margin: 0;
         }
 
-        .subject-card li {
-            background-color: #3D003D;
-            padding: 10px 15px;
+        .card ul li {
+            background-color: #2D002D; /* Slightly lighter purple for list items */
             margin-bottom: 10px;
+            padding: 10px 15px;
+            border-left: 4px solid #D300D3;
             border-radius: 8px;
-            color: #E0BBE4;
-            font-size: 1.1em;
-            transition: background-color 0.3s ease;
+            font-size: 0.95em;
+            color: #F0E6FA;
+            transition: background-color 0.2s ease, transform 0.2s ease;
         }
 
-        .subject-card li:hover {
-            background-color: #6F2DBD;
+        .card ul li:hover {
+            background-color: #4A004A;
+            transform: translateX(5px);
         }
 
-        .motivation-section {
-            text-align: center;
+        .countdown-section {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 25px;
             margin-bottom: 40px;
+        }
+
+        .countdown-timer {
+            background-color: #1A001A;
+            border: 2px solid #FF00FF;
+            border-radius: 15px;
+            padding: 25px 35px;
+            text-align: center;
+            box-shadow: 0 0 25px rgba(255, 0, 255, 0.6);
+            min-width: 280px;
+            flex: 1;
+            max-width: 45%;
+        }
+
+        .countdown-timer h2 {
+            margin-top: 0;
+            margin-bottom: 15px;
+            color: #FF00FF;
+            text-shadow: 0 0 10px rgba(255, 0, 255, 0.8);
+            font-size: 1.8em;
+        }
+
+        .countdown-timer div {
+            font-size: 3em;
+            font-weight: bold;
+            color: #9933FF; /* Bright purple for numbers */
+            text-shadow: 0 0 15px rgba(153, 51, 255, 0.9);
+            margin-bottom: 10px;
+        }
+
+        .countdown-timer p {
+            font-size: 1.1em;
+            color: #E0BBE4;
+        }
+
+        .motivation-area {
+            text-align: center;
+            margin-top: 40px;
             width: 100%;
         }
 
-        .motivation-button {
-            background-color: #CC2936;
-            color: #FFFFFF;
+        #motivationButton {
+            background-color: #FF00FF; /* Bright Electric purple */
+            color: #000000;
             border: none;
-            padding: 18px 35px;
-            font-size: 1.5em;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: background-color 0.3s ease, transform 0.2s ease;
-            box-shadow: 0 5px 20px rgba(204, 41, 54, 0.4);
-            letter-spacing: 1px;
+            padding: 18px 40px;
+            border-radius: 50px;
+            font-size: 1.4em;
             font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 0 25px rgba(255, 0, 255, 0.7);
+            transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
-        .motivation-button:hover {
-            background-color: #A61D2A;
-            transform: translateY(-3px);
+        #motivationButton:hover {
+            background-color: #CC00CC; /* Darker purple on hover */
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 0 35px rgba(255, 0, 255, 1);
         }
 
-        .motivation-button:active {
-            transform: translateY(0);
-            box-shadow: 0 2px 10px rgba(204, 41, 54, 0.4);
+        #motivationButton:active {
+            transform: translateY(1px);
+            box-shadow: 0 0 15px rgba(255, 0, 255, 0.5);
         }
 
-        /* Confetti effect styles */
         .confetti-overlay {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.8);
+            background-color: rgba(0, 0, 0, 0.8); /* Semi-transparent black */
             display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
-            flex-direction: column;
             z-index: 1000;
             opacity: 0;
             visibility: hidden;
-            transition: opacity 0.5s ease;
+            transition: opacity 0.5s ease, visibility 0.5s ease;
+            backdrop-filter: blur(5px);
         }
 
-        .confetti-overlay.active {
+        .confetti-overlay.show {
             opacity: 1;
             visibility: visible;
         }
 
         .confetti-quote {
-            color: #E0BBE4;
-            font-size: 3em;
+            color: #FFFFFF;
+            font-size: 2.8em;
+            font-weight: bold;
             text-align: center;
-            margin-bottom: 30px;
+            margin-bottom: 40px;
+            padding: 20px;
+            background: rgba(45, 0, 45, 0.8);
+            border-radius: 15px;
+            box-shadow: 0 0 30px rgba(255, 0, 255, 0.9);
             max-width: 80%;
             line-height: 1.4;
-            text-shadow: 0 0 15px #957DAD;
+            letter-spacing: 0.5px;
         }
 
-        .confetti-close {
-            background-color: #CC2936;
-            color: #FFFFFF;
-            border: none;
-            padding: 12px 25px;
-            font-size: 1.2em;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
-        }
-
-        .confetti-close:hover {
-            background-color: #A61D2A;
-        }
-
-        /* Confetti particles - basic example, requires more complex JS for animation */
         .confetti {
             position: absolute;
-            background-color: #CC2936; /* Red */
-            border-radius: 50%;
-            animation: fall 3s linear infinite;
+            width: 10px;
+            height: 10px;
+            background-color: #FF00FF;
             opacity: 0;
+            animation: confetti-fall 3s forwards ease-out;
         }
 
-        .confetti:nth-child(2n) { background-color: #6F2DBD; } /* Purple */
-        .confetti:nth-child(3n) { background-color: #E0BBE4; } /* Light Purple */
-        .confetti:nth-child(4n) { background-color: #957DAD; } /* Medium Purple */
-        .confetti:nth-child(5n) { background-color: #FFC0CB; } /* Pink */
-        .confetti:nth-child(6n) { background-color: #CC2936; } /* Red */
-        .confetti:nth-child(7n) { background-color: #FFFF00; } /* Yellow */
-        .confetti:nth-child(8n) { background-color: #00FF00; } /* Green */
-
-        @keyframes fall {
-            0% { transform: translateY(-100px) rotateZ(0deg); opacity: 0; }
-            10% { opacity: 1; }
-            100% { transform: translateY(100vh) rotateZ(720deg); opacity: 0; }
-        }
-
-        /* Responsive adjustments */
-        @media (max-width: 1000px) {
-            .countdown-card {
-                max-width: 100%;
+        @keyframes confetti-fall {
+            0% {
+                transform: translateY(-10vh) rotate(0deg);
+                opacity: 0;
             }
-            .subject-cards-container {
-                flex-direction: column;
-                align-items: center;
+            10% {
+                opacity: 1;
             }
-            .subject-card {
-                max-width: 80%;
-                margin-bottom: 20px;
-            }
-            .confetti-quote {
-                font-size: 2.2em;
-            }
-        }
-
-        @media (max-width: 600px) {
-            body {
-                padding: 10px;
-            }
-            h1 {
-                font-size: 2em;
-            }
-            .countdown-timer {
-                font-size: 2em;
-            }
-            .countdown-card, .subject-card {
-                padding: 20px;
-                min-width: unset;
-                max-width: 95%;
-            }
-            .subject-card h3 {
-                font-size: 1.4em;
-            }
-            .subject-card li {
-                font-size: 1em;
-            }
-            .motivation-button {
-                font-size: 1.2em;
-                padding: 15px 25px;
-            }
-            .confetti-quote {
-                font-size: 1.8em;
+            100% {
+                transform: translateY(100vh) rotate(720deg);
+                opacity: 0;
             }
         }
     </style>
 </head>
 <body>
+    <h1>Mission IIT 2028 Dashboard</h1>
 
-    <div class="dashboard-header">
-        <h1>🚀 Mission IIT 2028 Dashboard 🎯</h1>
-        <h2>Your personalized roadmap to success!</h2>
-    </div>
-
-    <div class="countdown-container">
-        <div class="countdown-card">
-            <h2>Class 10 Board Exams</h2>
-            <div id="board-exam-timer" class="countdown-timer">
-                <span id="board-days">00</span>D
-                <span id="board-hours">00</span>H
-                <span id="board-minutes">00</span>M
-                <span id="board-seconds">00</span>S
-            </div>
+    <div class="countdown-section">
+        <div class="countdown-timer">
+            <h2>Class 10 Board Exams Countdown</h2>
+            <div id="boardExamsCountdown">Loading...</div>
+            <p>Days, Hours, Minutes, Seconds until your first big test!</p>
         </div>
-        <div class="countdown-card">
-            <h2>JEE Main 2028</h2>
-            <div id="jee-main-timer" class="countdown-timer">
-                <span id="jee-days">00</span>D
-                <span id="jee-hours">00</span>H
-                <span id="jee-minutes">00</span>M
-                <span id="jee-seconds">00</span>S
-            </div>
+
+        <div class="countdown-timer">
+            <h2>JEE Main 2028 Countdown</h2>
+            <div id="jeeMainCountdown">Loading...</div>
+            <p>The ultimate goal approaches!</p>
         </div>
     </div>
 
-    <div class="subject-cards-container">
-        <div class="subject-card">
+    <div class="dashboard-container">
+        <div class="card">
             <h3>Physics</h3>
             <ul>
                 <li>Kinematics & Dynamics</li>
                 <li>Work, Energy & Power</li>
-                <li>Electrostatics</li>
-                <li>Current Electricity</li>
-                <li>Wave Optics</li>
+                <li>Gravitation</li>
+                <li>Optics & Wave Optics</li>
+                <li>Electrostats & Current Electricity</li>
                 <li>Modern Physics Basics</li>
             </ul>
         </div>
-        <div class="subject-card">
+
+        <div class="card">
             <h3>Chemistry</h3>
             <ul>
-                <li>Atomic Structure</li>
-                <li>Chemical Bonding</li>
-                <li>Periodic Classification</li>
-                <li>Stoichiometry</li>
-                <li>Organic Chemistry Basics</li>
-                <li>Chemical Equilibrium</li>
+                <li>Chemical Bonding & Molecular Structure</li>
+                <li>Stoichiometry & Mole Concept</li>
+                <li>Periodic Table & Periodicity</li>
+                <li>Redox Reactions</li>
+                <li>Organic Chemistry Basics (Nomenclature, Isomerism)</li>
+                <li>States of Matter & Thermodynamics</li>
             </ul>
         </div>
-        <div class="subject-card">
+
+        <div class="card">
             <h3>Maths</h3>
             <ul>
-                <li>Quadratic Equations</li>
-                <li>Arithmetic & Geometric Progressions</li>
-                <li>Trigonometry Foundations</li>
-                <li>Coordinate Geometry Basics</li>
-                <li>Sets, Relations & Functions</li>
+                <li>Quadratic Equations & Progressions</li>
+                <li>Trigonometry Fundamentals</li>
+                <li>Coordinate Geometry (Straight Lines, Circles)</li>
+                <li>Basic Calculus (Functions, Limits, Derivatives)</li>
+                <li>Permutations & Combinations</li>
                 <li>Matrices & Determinants</li>
             </ul>
         </div>
     </div>
 
-    <div class="motivation-section">
-        <button class="motivation-button" onclick="showMotivation()">Get Motivated!</button>
+    <div class="motivation-area">
+        <button id="motivationButton">Get Motivated!</button>
     </div>
 
-    <div id="confetti-overlay" class="confetti-overlay">
-        <h2 class="confetti-quote">"Hard work beats talent when talent doesn't work hard."</h2>
-        <button class="confetti-close" onclick="hideMotivation()">Got it!</button>
+    <div class="confetti-overlay" id="confettiOverlay">
+        <div class="confetti-quote">
+            "Hard work beats talent when talent doesn't work hard."
+            <br>
+            <br>
+            - Tim Notke (often attributed to Kevin Durant)
+        </div>
     </div>
 
     <script>
         // Set the target dates
-        const boardExamDate = new Date('2026-03-15T09:00:00'); // Assuming Class 10 Board in March 2026
-        const jeeMainDate = new Date('2028-01-20T09:00:00'); // Assuming JEE Main in Jan 2028
+        // Assuming Class 10 Board exams in March 2026 (for batch preparing for IIT in 2028)
+        const boardExamsDate = new Date('March 1, 2026 09:00:00').getTime();
+        // Assuming JEE Main 2028 in January 2028 (first attempt)
+        const jeeMainDate = new Date('January 20, 2028 09:00:00').getTime();
 
-        function updateCountdown(targetDate, daysId, hoursId, minutesId, secondsId) {
+        function updateCountdown(targetDate, elementId) {
             const now = new Date().getTime();
             const distance = targetDate - now;
-
-            if (distance < 0) {
-                document.getElementById(daysId).innerText = "EXPIRED";
-                document.getElementById(hoursId).innerText = "";
-                document.getElementById(minutesId).innerText = "";
-                document.getElementById(secondsId).innerText = "";
-                return;
-            }
 
             const days = Math.floor(distance / (1000 * 60 * 60 * 24));
             const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
             const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
             const seconds = Math.floor((distance % (1000 * 60)) / 1000);
 
-            document.getElementById(daysId).innerText = String(days).padStart(2, '0');
-            document.getElementById(hoursId).innerText = String(hours).padStart(2, '0');
-            document.getElementById(minutesId).innerText = String(minutes).padStart(2, '0');
-            document.getElementById(secondsId).innerText = String(seconds).padStart(2, '0');
+            if (distance < 0) {
+                document.getElementById(elementId).innerHTML = "EXAM PASSED!";
+                return;
+            }
+
+            document.getElementById(elementId).innerHTML = `${days}d ${hours}h ${minutes}m ${seconds}s`;
         }
 
-        // Update both timers every second
-        setInterval(() => {
-            updateCountdown(boardExamDate, 'board-days', 'board-hours', 'board-minutes', 'board-seconds');
-            updateCountdown(jeeMainDate, 'jee-days', 'jee-hours', 'jee-minutes', 'jee-seconds');
-        }, 1000);
+        // Update count down timers every 1 second
+        setInterval(() => updateCountdown(boardExamsDate, 'boardExamsCountdown'), 1000);
+        setInterval(() => updateCountdown(jeeMainDate, 'jeeMainCountdown'), 1000);
 
-        // Initial call to display immediately
-        updateCountdown(boardExamDate, 'board-days', 'board-hours', 'board-minutes', 'board-seconds');
-        updateCountdown(jeeMainDate, 'jee-days', 'jee-hours', 'jee-minutes', 'jee-seconds');
+        // Initial calls to display immediately
+        updateCountdown(boardExamsDate, 'boardExamsCountdown');
+        updateCountdown(jeeMainDate, 'jeeMainCountdown');
 
+        // Motivation button and confetti effect
+        const motivationButton = document.getElementById('motivationButton');
+        const confettiOverlay = document.getElementById('confettiOverlay');
 
-        // Confetti effect logic
-        const confettiOverlay = document.getElementById('confetti-overlay');
-
-        function createConfetti() {
-            const confetti = document.createElement('div');
-            confetti.classList.add('confetti');
-            confetti.style.width = Math.random() * 10 + 5 + 'px';
-            confetti.style.height = confetti.style.width;
-            confetti.style.left = Math.random() * 100 + 'vw';
-            confetti.style.animationDelay = Math.random() * 2 + 's';
-            confetti.style.animationDuration = Math.random() * 3 + 2 + 's';
-            confetti.style.opacity = Math.random();
-            confettiOverlay.appendChild(confetti);
+        motivationButton.addEventListener('click', () => {
+            confettiOverlay.classList.add('show');
+            generateConfetti(100); // Generate 100 confetti pieces
 
             setTimeout(() => {
-                confetti.remove();
-            }, parseFloat(confetti.style.animationDuration) * 1000);
+                confettiOverlay.classList.remove('show');
+                // Remove confetti after it falls
+                document.querySelectorAll('.confetti').forEach(c => c.remove());
+            }, 5000); // Hide after 5 seconds
+        });
+
+        function generateConfetti(count) {
+            for (let i = 0; i < count; i++) {
+                const confetti = document.createElement('div');
+                confetti.classList.add('confetti');
+                confetti.style.left = `${Math.random() * 100}vw`;
+                confetti.style.backgroundColor = `hsl(${Math.random() * 360}, 100%, 70%)`; // Random bright colors
+                confetti.style.animationDelay = `${Math.random() * 0.5}s`; // Stagger animation
+                confetti.style.animationDuration = `${3 + Math.random() * 2}s`; // Vary duration
+                confettiOverlay.appendChild(confetti);
+            }
         }
 
-        let confettiInterval;
-
-        function showMotivation() {
-            confettiOverlay.classList.add('active');
-            // Start generating confetti particles
-            confettiInterval = setInterval(createConfetti, 100); // Create a new confetti every 100ms for a burst
-            setTimeout(() => {
-                clearInterval(confettiInterval); // Stop generating after a short burst
-            }, 2000); // Stop after 2 seconds
-        }
-
-        function hideMotivation() {
-            confettiOverlay.classList.remove('active');
-            clearInterval(confettiInterval); // Ensure no more confetti is generated
-            // Remove existing confetti particles
-            const existingConfetti = confettiOverlay.querySelectorAll('.confetti');
-            existingConfetti.forEach(c => c.remove());
-        }
+        // Close overlay if clicked outside quote (optional, but good UX)
+        confettiOverlay.addEventListener('click', (event) => {
+            if (event.target === confettiOverlay) {
+                confettiOverlay.classList.remove('show');
+                document.querySelectorAll('.confetti').forEach(c => c.remove());
+            }
+        });
     </script>
 </body>
 </html>
