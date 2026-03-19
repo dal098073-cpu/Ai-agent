@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SMM Admin Control Panel - Stealth Mode</title>
+    <!-- CRITICAL FIREBASE SCRIPTS -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <!-- Google Fonts for a sleek look -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-bg: #1a1a2e;
+            --secondary-bg: #2e2e4e;
+            --card-bg: #3f3f6c;
+            --text-color: #e0e0e0;
+            --accent-color: #00f0b4; /* A vibrant teal/cyan */
+            --border-color: #4a4a7a;
+            --hover-color: #4a4a7a;
+            --green-dot: #00ff00;
+            --red-danger: #ff4d4d;
+            --font-mono: 'Roboto Mono', monospace;
+            --font-display: 'Orbitron', sans-serif;
+        }
+
+        body {
+            font-family: var(--font-mono);
+            background-color: var(--primary-bg);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            overflow-x: hidden;
+            background-image: radial-gradient(circle at top left, var(--secondary-bg) 0%, transparent 50%),
+                              radial-gradient(circle at bottom right, var(--secondary-bg) 0%, transparent 50%);
+            background-blend-mode: multiply;
+        }
+
+        .dashboard-container {
+            max-width: 1400px;
+            width: 100%;
+            margin: 20px auto;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        header {
+            background-color: var(--secondary-bg);
+            padding: 20px 30px;
+            border-bottom: 2px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        header h1 {
+            font-family: var(--font-display);
+            font-size: 2.2em;
+            color: var(--accent-color);
+            text-shadow: 0 0 10px rgba(0, 240, 180, 0.5);
+            margin: 0;
+        }
+
+        .system-status {
+            display: flex;
+            align-items: center;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            background-color: var(--green-dot);
+            border-radius: 50%;
+            margin-right: 8px;
+            box-shadow: 0 0 8px var(--green-dot);
+            animation: pulse 1.5s infinite ease-in-out;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.9); opacity: 0.7; }
+            50% { transform: scale(1.1); opacity: 1; }
+            100% { transform: scale(0.9); opacity: 0.7; }
+        }
+
+        .stats-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+
+        .stat-card {
+            background-color: var(--card-bg);
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--border-color);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            text-align: center;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4), 0 0 15px var(--accent-color);
+        }
+
+        .stat-card h3 {
+            font-size: 1.1em;
+            color: var(--accent-color);
+            margin-top: 0;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-family: var(--font-display);
+        }
+
+        .stat-card p {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: var(--text-color);
+            margin: 0;
+        }
+
+        .stat-card p.currency::before {
+            content: '$';
+            font-size: 0.8em;
+            vertical-align: super;
+            margin-right: 3px;
+            color: var(--accent-color);
+        }
+
+        .orders-section {
+            background-color: var(--card-bg);
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--border-color);
+        }
+
+        .orders-section h2 {
+            font-family: var(--font-display);
+            font-size: 1.8em;
+            color: var(--accent-color);
+            margin-top: 0;
+            margin-bottom: 25px;
+            text-shadow: 0 0 8px rgba(0, 240, 180, 0.3);
+        }
+
+        .order-table-container {
+            overflow-x: auto;
+            max-height: 60vh; /* Limit height and allow scroll */
+        }
+
+        .orders-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9em;
+            min-width: 700px; /* Ensure table is not too narrow on small screens */
+        }
+
+        .orders-table th, .orders-table td {
+            text-align: left;
+            padding: 15px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .orders-table th {
+            background-color: var(--secondary-bg);
+            color: var(--accent-color);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            position: sticky; /* Keep header visible on scroll */
+            top: 0;
+            z-index: 10;
+        }
+
+        .orders-table tbody tr {
+            transition: background-color 0.2s ease;
+        }
+
+        .orders-table tbody tr:hover {
+            background-color: var(--hover-color);
+        }
+
+        .orders-table td {
+            color: var(--text-color);
+        }
+
+        .orders-table td:first-child {
+            font-weight: bold;
+        }
+
+        .orders-table .status-dropdown {
+            background-color: var(--secondary-bg);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            padding: 8px 12px;
+            border-radius: 5px;
+            font-family: var(--font-mono);
+            font-size: 0.9em;
+            cursor: pointer;
+            outline: none;
+            appearance: none; /* Remove default dropdown arrow */
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            background-image: url('data:image/svg+xml;utf8,<svg fill="%2300f0b4" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/><path d="M0 0h24v24H0z" fill="none"/></svg>');
+            background-repeat: no-repeat;
+            background-position: right 8px center;
+            background-size: 20px;
+        }
+
+        .orders-table .status-dropdown:focus {
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 2px rgba(0, 240, 180, 0.3);
+        }
+
+        /* Status specific colors for dropdown */
+        .status-Pending { color: #f0ad4e; } /* Orange */
+        .status-Processing { color: #5bc0de; } /* Blue */
+        .status-Completed { color: #5cb85c; } /* Green */
+        .status-Canceled { color: var(--red-danger); } /* Red */
+        
+        .status-dropdown option {
+            background-color: var(--secondary-bg);
+            color: var(--text-color);
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .dashboard-container {
+                padding: 10px;
+            }
+
+            header {
+                flex-direction: column;
+                padding: 15px;
+                text-align: center;
+            }
+
+            header h1 {
+                font-size: 1.8em;
+                margin-bottom: 15px;
+            }
+
+            .stats-cards {
+                grid-template-columns: 1fr;
+            }
+
+            .stat-card {
+                padding: 20px;
+            }
+
+            .stat-card h3 {
+                font-size: 1em;
+            }
+
+            .stat-card p {
+                font-size: 2em;
+            }
+
+            .orders-section {
+                padding: 20px;
+            }
+
+            .orders-section h2 {
+                font-size: 1.5em;
+            }
+
+            .orders-table th, .orders-table td {
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <header>
+            <h1>SMM Admin Control Panel</h1>
+            <div class="system-status">
+                <div class="status-dot"></div>
+                <span>System Connected</span>
+            </div>
+        </header>
+
+        <main>
+            <section class="stats-cards" id="stats-cards">
+                <div class="stat-card">
+                    <h3>Total Orders</h3>
+                    <p id="total-orders">0</p>
+                </div>
+                <div class="stat-card">
+                    <h3>Pending Orders</h3>
+                    <p id="pending-orders">0</p>
+                </div>
+                <div class="stat-card">
+                    <h3>Total Revenue</h3>
+                    <p id="total-revenue" class="currency">0.00</p>
+                </div>
+            </section>
+
+            <section class="orders-section">
+                <h2>Order Management</h2>
+                <div class="order-table-container">
+                    <table class="orders-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Service</th>
+                                <th>Link</th>
+                                <th>Quantity</th>
+                                <th>Price</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="orders-table-body">
+                            <!-- Orders will be dynamically loaded here -->
+                            <tr><td colspan="6" style="text-align: center; padding: 30px;">Loading orders...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        // CRITICAL FIREBASE CONFIG
+        const firebaseConfig = {
+            apiKey: "AIzaSyASm3_DewrSoTXaNE_GoG9LxoSI15q0EY8",
+            authDomain: "auto-35527.firebaseapp.com",
+            projectId: "auto-35527",
+            storageBucket: "auto-35527.firebasestorage.app",
+            messagingSenderId: "82228269253",
+            appId: "1:82228269253:web:0bd872188d135462aae0ac"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // CRITICAL: Firestore collection and document reference
+        const smmDocRef = db.collection('smm-panel_data').doc('main');
+
+        const totalOrdersEl = document.getElementById('total-orders');
+        const pendingOrdersEl = document.getElementById('pending-orders');
+        const totalRevenueEl = document.getElementById('total-revenue');
+        const ordersTableBody = document.getElementById('orders-table-body');
+
+        // Status options for the dropdown
+        const statusOptions = ['Pending', 'Processing', 'Completed', 'Canceled'];
+
+        // Function to update stat cards
+        function updateStats(orders) {
+            totalOrdersEl.textContent = orders.length;
+
+            const pendingOrders = orders.filter(order => order.status === 'Pending').length;
+            pendingOrdersEl.textContent = pendingOrders;
+
+            const totalRevenue = orders.reduce((sum, order) => sum + (order.price || 0), 0);
+            totalRevenueEl.textContent = totalRevenue.toFixed(2);
+        }
+
+        // Function to render the orders table
+        function renderOrdersTable(orders) {
+            ordersTableBody.innerHTML = ''; // Clear existing rows
+
+            if (orders.length === 0) {
+                ordersTableBody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 30px; color: #888;">No orders found.</td></tr>';
+                return;
+            }
+
+            orders.forEach((order, index) => {
+                const row = document.createElement('tr');
+
+                // Basic sanitation for link to prevent XSS (though context is admin panel)
+                const sanitizedLink = order.link ? encodeURI(order.link) : '#';
+
+                row.innerHTML = `
+                    <td>${order.id || (index + 1)}</td>
+                    <td>${order.service || 'N/A'}</td>
+                    <td><a href="${sanitizedLink}" target="_blank" style="color: var(--accent-color); text-decoration: none;">${order.link ? 'View Link' : 'N/A'}</a></td>
+                    <td>${order.quantity || 'N/A'}</td>
+                    <td>$${(order.price || 0).toFixed(2)}</td>
+                    <td>
+                        <select class="status-dropdown status-${order.status}" data-order-id="${order.id || index}">
+                            ${statusOptions.map(status => `
+                                <option value="${status}" ${order.status === status ? 'selected' : ''} class="status-${status}">
+                                    ${status}
+                                </option>
+                            `).join('')}
+                        </select>
+                    </td>
+                `;
+                ordersTableBody.appendChild(row);
+            });
+
+            // Add event listeners to the new dropdowns
+            document.querySelectorAll('.status-dropdown').forEach(dropdown => {
+                dropdown.onchange = (event) => handleStatusChange(event);
+            });
+        }
+
+        // Function to handle status change
+        async function handleStatusChange(event) {
+            const dropdown = event.target;
+            const orderId = dropdown.dataset.orderId; // Unique ID or index
+            const newStatus = dropdown.value;
+
+            // Update dropdown class for styling
+            statusOptions.forEach(status => dropdown.classList.remove(`status-${status}`));
+            dropdown.classList.add(`status-${newStatus}`);
+
+            try {
+                // Fetch the current orders array to ensure we have the latest version
+                const doc = await smmDocRef.get();
+                if (doc.exists) {
+                    let orders = doc.data().orders || [];
+                    
+                    // Find the order by its ID or index (if ID not present, use index)
+                    const orderIndex = orders.findIndex(order => order.id == orderId); // Using loose equality for potential string/number comparison
+                    if (orderIndex === -1 && !isNaN(orderId)) { // If ID not found, try by index if orderId is a number
+                        orders[parseInt(orderId)].status = newStatus;
+                    } else if (orderIndex !== -1) {
+                        orders[orderIndex].status = newStatus;
+                    } else {
+                        console.error("Order not found with ID or index:", orderId);
+                        alert("Error: Could not find order to update.");
+                        // Revert dropdown state if update fails locally
+                        dropdown.value = orders.find(order => order.id == orderId)?.status || 'Pending'; // Revert to original status
+                        return;
+                    }
+
+                    // Save the entire updated array back to Firestore
+                    await smmDocRef.update({ orders: orders });
+                    console.log(`Order ${orderId} status updated to ${newStatus} in Firestore.`);
+                } else {
+                    console.error("No 'main' document found in 'smm-panel_data' collection.");
+                    alert("Error: Database document not found.");
+                }
+            } catch (error) {
+                console.error("Error updating order status:", error);
+                alert("Failed to update order status. Please check console for details.");
+                // Optionally revert UI change if Firebase update fails
+                // You might need to re-read from Firebase or store the original status
+            }
+        }
+
+        // Real-time listener for Firestore data
+        smmDocRef.onSnapshot(docSnapshot => {
+            if (docSnapshot.exists) {
+                const data = docSnapshot.data();
+                const orders = data.orders || []; // Ensure orders is an array, default to empty
+                console.log("Real-time data received:", orders);
+                updateStats(orders);
+                renderOrdersTable(orders);
+            } else {
+                console.log("No data found for 'smm-panel_data/main'. Initializing with empty orders array.");
+                updateStats([]);
+                renderOrdersTable([]);
+                // Optionally, create the document with an empty orders array if it doesn't exist
+                smmDocRef.set({ orders: [] }, { merge: true }).catch(e => console.error("Error creating document:", e));
+            }
+        }, error => {
+            console.error("Error fetching real-time data:", error);
+            // Optionally, display an error message in the UI
+            ordersTableBody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 30px; color: var(--red-danger);">Error loading data. Please check your connection.</td></tr>';
+        });
+
+        // Initialize a dummy order for testing if the document is empty
+        async function initializeDummyOrder() {
+            const doc = await smmDocRef.get();
+            if (!doc.exists || !doc.data().orders || doc.data().orders.length === 0) {
+                console.log("No orders found, adding dummy data.");
+                await smmDocRef.set({
+                    orders: [
+                        { id: 'ORD001', service: 'Instagram Followers', link: 'https://instagram.com/user1', quantity: 1000, price: 5.99, status: 'Pending' },
+                        { id: 'ORD002', service: 'TikTok Likes', link: 'https://tiktok.com/video1', quantity: 5000, price: 12.50, status: 'Processing' },
+                        { id: 'ORD003', service: 'YouTube Views', link: 'https://youtube.com/watch?v=abc', quantity: 10000, price: 25.00, status: 'Completed' },
+                        { id: 'ORD004', service: 'Twitter Retweets', link: 'https://twitter.com/tweet1', quantity: 200, price: 3.20, status: 'Canceled' },
+                        { id: 'ORD005', service: 'Facebook Shares', link: 'https://facebook.com/post1', quantity: 100, price: 7.80, status: 'Pending' }
+                    ]
+                }, { merge: true });
+            }
+        }
+
+        // Call dummy data initializer on load (optional, remove for production)
+        // initializeDummyOrder(); 
+    </script>
+</body>
+</html>
