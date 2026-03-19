@@ -1,0 +1,1658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SMM Panel - User Dashboard</title>
+    <!-- Firebase SDK - CRITICAL: DO NOT MODIFY THESE SCRIPTS -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles for dark theme and general layout */
+        body {
+            font-family: 'Inter', sans-serif;
+            @apply bg-gray-900 text-gray-100;
+        }
+        .sidebar {
+            @apply w-64 bg-gray-800 fixed h-full p-4 flex flex-col shadow-lg;
+            transition: transform 0.3s ease-in-out;
+            transform: translateX(0);
+        }
+        .sidebar.hidden {
+            transform: translateX(-100%);
+        }
+        .main-content {
+            @apply ml-64 p-8 min-h-screen transition-all duration-300 ease-in-out;
+        }
+        .main-content.full-width {
+            margin-left: 0;
+        }
+        .card {
+            @apply bg-gray-800 p-6 rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300;
+        }
+        .btn-primary {
+            @apply bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-md transition-colors duration-200;
+        }
+        .btn-secondary {
+            @apply bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 px-4 rounded-md transition-colors duration-200;
+        }
+        .input-field {
+            @apply w-full p-3 bg-gray-700 border border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 transition-all duration-200;
+        }
+        .table-header th {
+            @apply px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider;
+        }
+        .table-row td {
+            @apply px-4 py-4 whitespace-nowrap text-sm text-gray-200 border-b border-gray-700;
+        }
+        .status-pending { @apply bg-yellow-500 text-yellow-900; }
+        .status-processing { @apply bg-blue-500 text-blue-900; }
+        .status-in-progress { @apply bg-indigo-500 text-indigo-900; }
+        .status-completed { @apply bg-green-500 text-green-900; }
+        .status-partial { @apply bg-purple-500 text-purple-900; }
+        .status-canceled { @apply bg-red-500 text-red-900; }
+        .status-refunded { @apply bg-gray-500 text-gray-900; }
+        .badge { @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium; }
+
+        /* Custom scrollbar for dark theme */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #2d3748; /* bg-gray-800 */
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #4a5568; /* bg-gray-600 */
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #6a7488; /* bg-gray-500 lighter */
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Overlay for mobile sidebar -->
+    <div id="sidebar-overlay" class="fixed inset-0 bg-black opacity-50 z-30 hidden lg:hidden"></div>
+
+    <!-- Sidebar Navigation -->
+    <aside id="sidebar" class="sidebar z-40">
+        <div class="text-2xl font-bold text-white mb-8 text-center">SMM Panel</div>
+        <nav class="flex-grow">
+            <ul>
+                <li class="mb-2">
+                    <a href="#" data-page="dashboard" class="flex items-center p-3 rounded-md hover:bg-gray-700 transition-colors duration-200">
+                        <svg class="w-5 h-5 mr-3 text-gray-400" fill="currentColor" viewBox="0 0 20 20"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"></path></svg>
+                        Dashboard
+                    </a>
+                </li>
+                <li class="mb-2">
+                    <a href="#" data-page="new-order" class="flex items-center p-3 rounded-md hover:bg-gray-700 transition-colors duration-200">
+                        <svg class="w-5 h-5 mr-3 text-gray-400" fill="currentColor" viewBox="0 0 20 20"><path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z"></path><path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-3a1 1 0 10-2 0v3H5V7h3a1 1 0 000-2H5z"></path></svg>
+                        New Order
+                    </a>
+                </li>
+                <li class="mb-2">
+                    <a href="#" data-page="mass-order" class="flex items-center p-3 rounded-md hover:bg-gray-700 transition-colors duration-200">
+                        <svg class="w-5 h-5 mr-3 text-gray-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 2a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V3a1 1 0 011-1z" clip-rule="evenodd"></path></svg>
+                        Mass Order
+                    </a>
+                </li>
+                <li class="mb-2">
+                    <a href="#" data-page="order-history" class="flex items-center p-3 rounded-md hover:bg-gray-700 transition-colors duration-200">
+                        <svg class="w-5 h-5 mr-3 text-gray-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 2a8 8 0 100 16 8 8 0 000-16zm1 11a1 1 0 10-2 0V7a1 1 0 102 0v6z" clip-rule="evenodd"></path></svg>
+                        Order History
+                    </a>
+                </li>
+                <li class="mb-2">
+                    <a href="#" data-page="add-funds" class="flex items-center p-3 rounded-md hover:bg-gray-700 transition-colors duration-200">
+                        <svg class="w-5 h-5 mr-3 text-gray-400" fill="currentColor" viewBox="0 0 20 20"><path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z"></path><path fill-rule="evenodd" d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h.01a1 1 0 110 2H5a1 1 0 01-1-1zm4 0a1 1 0 011-1h.01a1 1 0 110 2H9a1 1 0 01-1-1zm4 0a1 1 0 011-1h.01a1 1 0 110 2H13a1 1 0 01-1-1z" clip-rule="evenodd"></path></svg>
+                        Add Funds
+                    </a>
+                </li>
+                <li class="mb-2">
+                    <a href="#" data-page="support-tickets" class="flex items-center p-3 rounded-md hover:bg-gray-700 transition-colors duration-200">
+                        <svg class="w-5 h-5 mr-3 text-gray-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2h2a1 1 0 100-2H9z" clip-rule="evenodd"></path></svg>
+                        Support Tickets
+                    </a>
+                </li>
+                <li class="mb-2">
+                    <a href="#" data-page="api-documentation" class="flex items-center p-3 rounded-md hover:bg-gray-700 transition-colors duration-200">
+                        <svg class="w-5 h-5 mr-3 text-gray-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M12.316 3.051a1 1 0 01.633 1.292L11.758 9H17a1 1 0 010 2h-5.242l1.192 4.657a1 1 0 01-1.922.492L9.758 11H3a1 1 0 110-2h5.242L7.051 4.343a1 1 0 011.922-.492L10.242 9H17a1 1 0 010 2h-5.242l1.192 4.657a1 1 0 01-1.922.492L9.758 11H3a1 1 0 110-2h5.242L7.051 4.343a1 1 0 011.922-.492z" clip-rule="evenodd"></path></svg>
+                        API Documentation
+                    </a>
+                </li>
+            </ul>
+        </nav>
+        <div class="mt-auto pt-4 border-t border-gray-700">
+            <button id="logout-btn" class="flex items-center w-full p-3 rounded-md text-red-400 hover:bg-red-700 hover:text-white transition-colors duration-200">
+                <svg class="w-5 h-5 mr-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 102 0V4a1 1 0 00-1-1zm10.293 9.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L14.586 9H7a1 1 0 100 2h7.586l-1.293 1.293z" clip-rule="evenodd"></path></svg>
+                Logout
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <div id="main-content" class="main-content">
+        <!-- Topbar for mobile sidebar toggle -->
+        <div class="lg:hidden flex justify-between items-center bg-gray-800 p-4 mb-8 rounded-lg shadow-md">
+            <button id="sidebar-toggle-btn" class="text-white focus:outline-none">
+                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z"></path></svg>
+            </button>
+            <h1 class="text-xl font-bold text-white">SMM Panel</h1>
+            <div class="w-6 h-6"></div> <!-- Placeholder for alignment -->
+        </div>
+
+        <!-- Authentication Forms (Login/Register/Reset) -->
+        <div id="auth-container" class="max-w-md mx-auto card p-8 my-10">
+            <h2 id="auth-title" class="text-3xl font-bold text-center mb-6">Login</h2>
+
+            <form id="login-form" class="space-y-4">
+                <div>
+                    <label for="login-email" class="block text-sm font-medium text-gray-300">Email</label>
+                    <input type="email" id="login-email" name="email" required class="input-field mt-1" placeholder="your@example.com">
+                </div>
+                <div>
+                    <label for="login-password" class="block text-sm font-medium text-gray-300">Password</label>
+                    <input type="password" id="login-password" name="password" required class="input-field mt-1" placeholder="********">
+                </div>
+                <button type="submit" class="btn-primary w-full">Login</button>
+                <div class="text-center text-sm mt-4">
+                    <a href="#" id="show-register" class="text-blue-400 hover:underline">Don't have an account? Register</a>
+                    <br>
+                    <a href="#" id="show-reset" class="text-blue-400 hover:underline mt-2 inline-block">Forgot password?</a>
+                </div>
+            </form>
+
+            <form id="register-form" class="space-y-4 hidden">
+                <div>
+                    <label for="register-username" class="block text-sm font-medium text-gray-300">Username</label>
+                    <input type="text" id="register-username" name="username" required class="input-field mt-1" placeholder="john_doe">
+                </div>
+                <div>
+                    <label for="register-email" class="block text-sm font-medium text-gray-300">Email</label>
+                    <input type="email" id="register-email" name="email" required class="input-field mt-1" placeholder="your@example.com">
+                </div>
+                <div>
+                    <label for="register-password" class="block text-sm font-medium text-gray-300">Password</label>
+                    <input type="password" id="register-password" name="password" required class="input-field mt-1" placeholder="********">
+                </div>
+                <div>
+                    <label for="register-confirm-password" class="block text-sm font-medium text-gray-300">Confirm Password</label>
+                    <input type="password" id="register-confirm-password" name="confirmPassword" required class="input-field mt-1" placeholder="********">
+                </div>
+                <button type="submit" class="btn-primary w-full">Register</button>
+                <div class="text-center text-sm mt-4">
+                    <a href="#" id="show-login-from-register" class="text-blue-400 hover:underline">Already have an account? Login</a>
+                </div>
+            </form>
+
+            <form id="reset-password-form" class="space-y-4 hidden">
+                <p class="text-sm text-gray-400">Enter your email address and we'll send you a password reset link.</p>
+                <div>
+                    <label for="reset-email" class="block text-sm font-medium text-gray-300">Email</label>
+                    <input type="email" id="reset-email" name="email" required class="input-field mt-1" placeholder="your@example.com">
+                </div>
+                <button type="submit" class="btn-primary w-full">Reset Password</button>
+                <div class="text-center text-sm mt-4">
+                    <a href="#" id="show-login-from-reset" class="text-blue-400 hover:underline">Back to Login</a>
+                </div>
+            </form>
+
+            <p id="auth-message" class="text-center mt-4 text-sm"></p>
+        </div>
+
+        <!-- Dashboard Content (hidden until login) -->
+        <div id="dashboard-content" class="hidden">
+            <!-- Dashboard Page -->
+            <div id="page-dashboard" class="page">
+                <h1 class="text-4xl font-bold mb-8">Welcome, <span id="user-display-name" class="text-blue-400">User!</span></h1>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <div class="card flex flex-col items-center justify-center text-center">
+                        <svg class="w-12 h-12 text-blue-400 mb-3" fill="currentColor" viewBox="0 0 20 20"><path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z"></path><path fill-rule="evenodd" d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h.01a1 1 0 110 2H5a1 1 0 01-1-1zm4 0a1 1 0 011-1h.01a1 1 0 110 2H9a1 1 0 01-1-1zm4 0a1 1 0 011-1h.01a1 1 0 110 2H13a1 1 0 01-1-1z" clip-rule="evenodd"></path></svg>
+                        <h3 class="text-lg font-semibold text-gray-300">Account Balance</h3>
+                        <p id="dashboard-balance" class="text-3xl font-bold text-blue-500 mt-2">$0.00</p>
+                    </div>
+                    <div class="card flex flex-col items-center justify-center text-center">
+                        <svg class="w-12 h-12 text-green-400 mb-3" fill="currentColor" viewBox="0 0 20 20"><path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.976 5.976 0 004 15v3H1v-3a3 3 0 013.75-2.906z"></path></svg>
+                        <h3 class="text-lg font-semibold text-gray-300">Total Spent</h3>
+                        <p id="dashboard-total-spent" class="text-3xl font-bold text-green-500 mt-2">$0.00</p>
+                    </div>
+                    <div class="card flex flex-col items-center justify-center text-center">
+                        <svg class="w-12 h-12 text-purple-400 mb-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 2a8 8 0 100 16 8 8 0 000-16zM6 9a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 5a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd"></path></svg>
+                        <h3 class="text-lg font-semibold text-gray-300">Total Orders</h3>
+                        <p id="dashboard-total-orders" class="text-3xl font-bold text-purple-500 mt-2">0</p>
+                    </div>
+                    <div class="card flex flex-col items-center justify-center text-center">
+                        <svg class="w-12 h-12 text-yellow-400 mb-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2h2a1 1 0 100-2H9z" clip-rule="evenodd"></path></svg>
+                        <h3 class="text-lg font-semibold text-gray-300">Open Tickets</h3>
+                        <p id="dashboard-open-tickets" class="text-3xl font-bold text-yellow-500 mt-2">0</p>
+                    </div>
+                </div>
+
+                <div class="card p-6">
+                    <h2 class="text-2xl font-bold mb-6 text-gray-200">Recent Orders</h2>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-700">
+                            <thead>
+                                <tr class="table-header">
+                                    <th>Order ID</th>
+                                    <th>Service</th>
+                                    <th>Link</th>
+                                    <th>Quantity</th>
+                                    <th>Charge</th>
+                                    <th>Status</th>
+                                    <th>Date</th>
+                                </tr>
+                            </thead>
+                            <tbody id="dashboard-recent-orders-body" class="divide-y divide-gray-700">
+                                <!-- Recent orders will be loaded here by JavaScript -->
+                                <tr><td colspan="7" class="table-row text-center text-gray-400">No recent orders.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- New Order Page -->
+            <div id="page-new-order" class="page hidden">
+                <h1 class="text-4xl font-bold mb-8">New Order</h1>
+                <div class="card max-w-2xl mx-auto">
+                    <form id="new-order-form" class="space-y-6">
+                        <div>
+                            <label for="category-select" class="block text-sm font-medium text-gray-300 mb-1">Category</label>
+                            <select id="category-select" class="input-field" required>
+                                <option value="">Select a Category</option>
+                                <!-- Categories populated by JS -->
+                            </select>
+                        </div>
+                        <div>
+                            <label for="service-select" class="block text-sm font-medium text-gray-300 mb-1">Service</label>
+                            <select id="service-select" class="input-field" required disabled>
+                                <option value="">Select a Service</option>
+                                <!-- Services populated by JS -->
+                            </select>
+                        </div>
+                        <div id="service-details" class="hidden bg-gray-700 p-4 rounded-md border border-gray-600 space-y-2">
+                            <p class="text-gray-300"><strong class="text-white">Description:</strong> <span id="service-description"></span></p>
+                            <p class="text-gray-300"><strong class="text-white">Min/Max:</strong> <span id="service-min-max"></span></p>
+                            <p class="text-gray-300"><strong class="text-white">Rate per 1000:</strong> $<span id="service-rate-per-1000"></span></p>
+                        </div>
+                        <div>
+                            <label for="order-link" class="block text-sm font-medium text-gray-300 mb-1">Link</label>
+                            <input type="url" id="order-link" class="input-field" placeholder="e.g., https://instagram.com/p/..." required>
+                        </div>
+                        <div id="order-quantity-group">
+                            <label for="order-quantity" class="block text-sm font-medium text-gray-300 mb-1">Quantity</label>
+                            <input type="number" id="order-quantity" class="input-field" min="1" required placeholder="e.g., 1000">
+                            <p class="text-xs text-gray-400 mt-1">Minimum: <span id="quantity-min">0</span>, Maximum: <span id="quantity-max">0</span></p>
+                        </div>
+                        <div id="order-custom-comments-group" class="hidden">
+                            <label for="order-custom-comments" class="block text-sm font-medium text-gray-300 mb-1">Comments (one per line)</label>
+                            <textarea id="order-custom-comments" rows="5" class="input-field" placeholder="Comment 1&#10;Comment 2&#10;Comment 3"></textarea>
+                            <p class="text-xs text-gray-400 mt-1">Each line will be processed as a separate comment.</p>
+                        </div>
+                        <div id="order-subscription-group" class="hidden">
+                            <p class="text-sm font-medium text-gray-300">Subscription options will appear here.</p>
+                        </div>
+
+                        <div class="flex justify-between items-center bg-gray-700 p-4 rounded-md border border-gray-600">
+                            <p class="text-lg font-semibold text-gray-200">Total Charge:</p>
+                            <p id="total-charge" class="text-2xl font-bold text-blue-500">$0.00</p>
+                        </div>
+                        <button type="submit" class="btn-primary w-full">Place Order</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Mass Order Page -->
+            <div id="page-mass-order" class="page hidden">
+                <h1 class="text-4xl font-bold mb-8">Mass Order</h1>
+                <div class="card max-w-2xl mx-auto">
+                    <p class="mb-4 text-gray-300">Paste your orders below, one per line, in the format: <code class="bg-gray-700 p-1 rounded">Service_ID | Link | Quantity</code></p>
+                    <div class="mb-4 text-sm text-gray-400">
+                        Example:
+                        <pre class="bg-gray-700 p-3 rounded-md mt-2">
+101 | https://instagram.com/p/abc | 1000
+102 | https://tiktok.com/@user/vid | 500
+                        </pre>
+                        <p class="mt-2 text-yellow-400">Ensure Service_IDs are correct and your balance is sufficient!</p>
+                    </div>
+                    <form id="mass-order-form" class="space-y-6">
+                        <div>
+                            <label for="mass-order-textarea" class="block text-sm font-medium text-gray-300 mb-1">Orders List</label>
+                            <textarea id="mass-order-textarea" rows="10" class="input-field" placeholder="Service_ID | Link | Quantity&#10;..."></textarea>
+                        </div>
+                        <button type="submit" class="btn-primary w-full">Process Mass Orders</button>
+                        <p id="mass-order-message" class="mt-4 text-center text-sm"></p>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Order History Page -->
+            <div id="page-order-history" class="page hidden">
+                <h1 class="text-4xl font-bold mb-8">Order History</h1>
+                <div class="card p-6">
+                    <div class="flex flex-wrap items-center justify-between mb-6 gap-4">
+                        <input type="text" id="order-search" placeholder="Search by Order ID, Link..." class="input-field w-full md:w-1/3">
+                        <select id="order-status-filter" class="input-field w-full md:w-1/4">
+                            <option value="">All Statuses</option>
+                            <option value="Pending">Pending</option>
+                            <option value="Processing">Processing</option>
+                            <option value="In Progress">In Progress</option>
+                            <option value="Completed">Completed</option>
+                            <option value="Partial">Partial</option>
+                            <option value="Canceled">Canceled</option>
+                            <option value="Refunded">Refunded</option>
+                        </select>
+                        <button id="reset-filters" class="btn-secondary w-full md:w-auto">Reset Filters</button>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-700">
+                            <thead>
+                                <tr class="table-header">
+                                    <th>Order ID</th>
+                                    <th>Service</th>
+                                    <th>Link</th>
+                                    <th>Quantity</th>
+                                    <th>Charge</th>
+                                    <th>Status</th>
+                                    <th>API Order ID</th>
+                                    <th>Date</th>
+                                </tr>
+                            </thead>
+                            <tbody id="order-history-body" class="divide-y divide-gray-700">
+                                <!-- Order history will be loaded here by JavaScript -->
+                                <tr><td colspan="8" class="table-row text-center text-gray-400">No orders found.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="mt-6 flex justify-between items-center">
+                        <button id="prev-page" class="btn-secondary" disabled>Previous</button>
+                        <span class="text-gray-300">Page <span id="current-page">1</span> of <span id="total-pages">1</span></span>
+                        <button id="next-page" class="btn-secondary" disabled>Next</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Add Funds Page -->
+            <div id="page-add-funds" class="page hidden">
+                <h1 class="text-4xl font-bold mb-8">Add Funds</h1>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+                    <!-- Payment Gateway 1 (e.g., Stripe) -->
+                    <div class="card">
+                        <h2 class="text-2xl font-bold mb-4 text-gray-200">Pay with Stripe</h2>
+                        <form id="stripe-payment-form" class="space-y-4">
+                            <div>
+                                <label for="stripe-amount" class="block text-sm font-medium text-gray-300">Amount ($)</label>
+                                <input type="number" id="stripe-amount" min="1" step="0.01" required class="input-field mt-1" placeholder="e.g., 50.00">
+                            </div>
+                            <p class="text-sm text-gray-400">
+                                <strong class="text-yellow-400">Disclaimer:</strong> This is a simulated payment form. No real transaction will occur.
+                            </p>
+                            <button type="submit" class="btn-primary w-full">Pay with Stripe</button>
+                        </form>
+                    </div>
+
+                    <!-- Payment Gateway 2 (e.g., PayPal) -->
+                    <div class="card">
+                        <h2 class="text-2xl font-bold mb-4 text-gray-200">Pay with PayPal</h2>
+                        <form id="paypal-payment-form" class="space-y-4">
+                            <div>
+                                <label for="paypal-amount" class="block text-sm font-medium text-gray-300">Amount ($)</label>
+                                <input type="number" id="paypal-amount" min="1" step="0.01" required class="input-field mt-1" placeholder="e.g., 25.00">
+                            </div>
+                             <p class="text-sm text-gray-400">
+                                <strong class="text-yellow-400">Disclaimer:</strong> This is a simulated payment form. No real transaction will occur.
+                            </p>
+                            <button type="submit" class="btn-primary w-full">Pay with PayPal</button>
+                        </form>
+                    </div>
+
+                    <!-- Manual Payment Submission -->
+                    <div class="card col-span-1 md:col-span-2">
+                        <h2 class="text-2xl font-bold mb-4 text-gray-200">Manual Payment</h2>
+                        <p class="mb-4 text-gray-300">If you've made a payment via Bank Transfer, UPI, or other manual methods, please submit details below. Funds will be added after manual verification by an admin.</p>
+                        <form id="manual-payment-form" class="space-y-4">
+                            <div>
+                                <label for="manual-amount" class="block text-sm font-medium text-gray-300">Amount Paid ($)</label>
+                                <input type="number" id="manual-amount" min="1" step="0.01" required class="input-field mt-1" placeholder="e.g., 100.00">
+                            </div>
+                            <div>
+                                <label for="manual-method" class="block text-sm font-medium text-gray-300">Payment Method</label>
+                                <input type="text" id="manual-method" required class="input-field mt-1" placeholder="e.g., Bank Transfer, UPI, BTC">
+                            </div>
+                            <div>
+                                <label for="manual-transaction-id" class="block text-sm font-medium text-gray-300">Transaction ID/Reference</label>
+                                <input type="text" id="manual-transaction-id" required class="input-field mt-1" placeholder="e.g., TXN123456789">
+                            </div>
+                            <div>
+                                <label for="manual-notes" class="block text-sm font-medium text-gray-300">Notes (Optional)</label>
+                                <textarea id="manual-notes" rows="3" class="input-field mt-1" placeholder="Any additional information..."></textarea>
+                            </div>
+                            <button type="submit" class="btn-primary w-full">Submit Manual Payment</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Support Tickets Page -->
+            <div id="page-support-tickets" class="page hidden">
+                <h1 class="text-4xl font-bold mb-8">Support Tickets</h1>
+
+                <div class="card mb-8">
+                    <h2 class="text-2xl font-bold mb-4 text-gray-200">Create New Ticket</h2>
+                    <form id="new-ticket-form" class="space-y-4">
+                        <div>
+                            <label for="ticket-subject" class="block text-sm font-medium text-gray-300 mb-1">Subject</label>
+                            <input type="text" id="ticket-subject" required class="input-field" placeholder="Issue with an order, payment, etc.">
+                        </div>
+                        <div>
+                            <label for="ticket-message" class="block text-sm font-medium text-gray-300 mb-1">Message</label>
+                            <textarea id="ticket-message" rows="5" required class="input-field" placeholder="Please describe your issue in detail."></textarea>
+                        </div>
+                        <button type="submit" class="btn-primary">Submit Ticket</button>
+                    </form>
+                </div>
+
+                <div class="card">
+                    <h2 class="text-2xl font-bold mb-4 text-gray-200">Your Tickets</h2>
+                    <div id="tickets-list" class="space-y-4">
+                        <!-- Tickets will be loaded here by JavaScript -->
+                        <p class="text-gray-400 text-center py-4">No tickets found.</p>
+                    </div>
+                </div>
+
+                <!-- Ticket Modal (hidden by default) -->
+                <div id="ticket-modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 hidden">
+                    <div class="bg-gray-800 p-8 rounded-lg shadow-xl max-w-3xl w-full mx-4">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-2xl font-bold text-gray-200">Ticket #<span id="modal-ticket-id"></span>: <span id="modal-ticket-subject"></span></h3>
+                            <button id="close-ticket-modal" class="text-gray-400 hover:text-white">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                            </button>
+                        </div>
+
+                        <div id="modal-ticket-messages" class="h-80 overflow-y-auto bg-gray-700 p-4 rounded-md mb-6 space-y-4">
+                            <!-- Messages will be loaded here -->
+                        </div>
+
+                        <form id="ticket-reply-form" class="space-y-4">
+                            <div>
+                                <label for="reply-message" class="block text-sm font-medium text-gray-300 mb-1">Your Reply</label>
+                                <textarea id="reply-message" rows="3" required class="input-field" placeholder="Type your message here..."></textarea>
+                            </div>
+                            <button type="submit" class="btn-primary">Send Reply</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- API Documentation Page -->
+            <div id="page-api-documentation" class="page hidden">
+                <h1 class="text-4xl font-bold mb-8">API Documentation</h1>
+                <div class="card max-w-3xl mx-auto space-y-6">
+                    <p class="text-gray-300">Access your SMM panel features programmatically using our powerful API. Your unique API Key is required for all authenticated requests.</p>
+
+                    <div class="bg-gray-700 p-4 rounded-md border border-gray-600">
+                        <h2 class="text-xl font-bold text-gray-200 mb-2">Your API Key</h2>
+                        <p id="api-key-display" class="font-mono text-lg break-all text-green-400">Loading...</p>
+                        <button id="regenerate-api-key-btn" class="btn-secondary mt-3">Regenerate API Key</button>
+                        <p class="text-sm text-yellow-400 mt-2"><strong>Warning:</strong> Regenerating your API key will invalidate the old one. Update any scripts using it.</p>
+                    </div>
+
+                    <div class="bg-gray-700 p-4 rounded-md border border-gray-600 space-y-3">
+                        <h2 class="text-xl font-bold text-gray-200 mb-2">API Endpoint</h2>
+                        <code class="block bg-gray-800 p-3 rounded-md text-white">https://yourdomain.com/api/v1</code>
+                        <p class="text-sm text-gray-400">All requests should be sent to this base URL.</p>
+                    </div>
+
+                    <div class="bg-gray-700 p-4 rounded-md border border-gray-600 space-y-3">
+                        <h2 class="text-xl font-bold text-gray-200 mb-2">Authentication</h2>
+                        <p class="text-gray-300">Include your API Key in the request header as <code class="bg-gray-800 p-1 rounded">X-API-Key</code> or as a query parameter <code class="bg-gray-800 p-1 rounded">?api_key=YOUR_API_KEY</code>.</p>
+                        <p class="text-yellow-400 text-sm">Example (using `X-API-Key` header is recommended for security):</p>
+                        <pre class="bg-gray-800 p-3 rounded-md text-white">
+curl -H "X-API-Key: YOUR_API_KEY" \
+     -X POST \
+     -d '{"action": "balance"}' \
+     https://yourdomain.com/api/v1
+                        </pre>
+                    </div>
+
+                    <div class="bg-gray-700 p-4 rounded-md border border-gray-600 space-y-3">
+                        <h2 class="text-xl font-bold text-gray-200 mb-2">API Actions & Endpoints (Simulated)</h2>
+                        <h3 class="text-lg font-semibold text-gray-300">1. Get User Balance</h3>
+                        <p class="text-gray-300"><strong>Method:</strong> <code class="bg-gray-800 p-1 rounded">POST</code></p>
+                        <p class="text-gray-300"><strong>Endpoint:</strong> <code class="bg-gray-800 p-1 rounded">/api/v1</code></p>
+                        <p class="text-gray-300"><strong>Body:</strong> <code class="bg-gray-800 p-1 rounded">{ "action": "balance" }</code></p>
+                        <p class="text-gray-300"><strong>Response:</strong> <code class="bg-gray-800 p-1 rounded">{ "status": "success", "balance": 123.45 }</code></p>
+
+                        <h3 class="text-lg font-semibold text-gray-300 mt-4">2. Place New Order</h3>
+                        <p class="text-gray-300"><strong>Method:</strong> <code class="bg-gray-800 p-1 rounded">POST</code></p>
+                        <p class="text-gray-300"><strong>Endpoint:</strong> <code class="bg-gray-800 p-1 rounded">/api/v1</code></p>
+                        <p class="text-gray-300"><strong>Body:</strong> <code class="bg-gray-800 p-1 rounded">{ "action": "add", "service": "SERVICE_ID", "link": "LINK", "quantity": 1000 }</code></p>
+                        <p class="text-gray-300"><strong>Response:</strong> <code class="bg-gray-800 p-1 rounded">{ "status": "success", "order": "ORDER_ID" }</code></p>
+
+                        <h3 class="text-lg font-semibold text-gray-300 mt-4">3. Check Order Status</h3>
+                        <p class="text-gray-300"><strong>Method:</strong> <code class="bg-gray-800 p-1 rounded">POST</code></p>
+                        <p class="text-gray-300"><strong>Endpoint:</strong> <code class="bg-gray-800 p-1 rounded">/api/v1</code></p>
+                        <p class="text-gray-300"><strong>Body:</strong> <code class="bg-gray-800 p-1 rounded">{ "action": "status", "order": "ORDER_ID" }</code></p>
+                        <p class="text-gray-300"><strong>Response:</strong> <code class="bg-gray-800 p-1 rounded">{ "status": "success", "order_id": "ORDER_ID", "api_order_id": "API_ORDER_ID", "current_status": "Processing", "remains": 500 }</code></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Admin Panel Placeholder (hidden by default) -->
+            <div id="page-admin-panel" class="page hidden">
+                <h1 class="text-4xl font-bold mb-8 text-red-500">Admin Control Panel</h1>
+                <p class="text-lg text-gray-300 mb-4">This section is for administrators only and would contain features like:</p>
+                <ul class="list-disc list-inside text-gray-300 space-y-2 card p-6 max-w-xl mx-auto">
+                    <li>User Management (view, edit, suspend users)</li>
+                    <li>Service Management (add, edit, delete services/categories)</li>
+                    <li>Order Management (change order status, refund)</li>
+                    <li>Payment Verification for Manual Deposits</li>
+                    <li>Ticket Management (view all tickets, reply to users)</li>
+                    <li>API Provider Configuration</li>
+                    <li>System Settings & Statistics</li>
+                </ul>
+                <p class="mt-8 text-gray-400">For the scope of this request, the focus is on the User Dashboard. A full Admin UI would be developed separately with dedicated authentication and authorization layers.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Firebase Configuration - CRITICAL: DO NOT MODIFY THIS CONFIG
+        const firebaseConfig = {
+            apiKey: "AIzaSyASm3_DewrSoTXaNE_GoG9LxoSI15q0EY8",
+            authDomain: "auto-35527.firebaseapp.com",
+            projectId: "auto-35527",
+            storageBucket: "auto-35527.firebasestorage.app",
+            messagingSenderId: "82228269253",
+            appId: "1:82228269253:web:0bd872188d135462aae0ac"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // Firestore document reference
+        // CRITICAL: All data will be stored/read from this single document
+        const smmPanelDocRef = db.collection('smm-panel-2_data').doc('main');
+
+        let appData = {
+            users: [],
+            orders: [],
+            categories: [],
+            services: [],
+            transactions: [],
+            tickets: []
+        };
+        let currentUser = null; // Stored in localStorage for session management
+
+        // --- Utility Functions ---
+        function generateUniqueId() {
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
+        }
+
+        function formatCurrency(amount) {
+            return `$${parseFloat(amount).toFixed(2)}`;
+        }
+
+        function formatDate(timestamp) {
+            if (!timestamp) return 'N/A';
+            const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp); // Handle Firestore Timestamp and JS Date
+            return date.toLocaleString();
+        }
+
+        function getStatusBadgeClass(status) {
+            switch (status) {
+                case 'Pending': return 'status-pending';
+                case 'Processing': return 'status-processing';
+                case 'In Progress': return 'status-in-progress';
+                case 'Completed': return 'status-completed';
+                case 'Partial': return 'status-partial';
+                case 'Canceled': return 'status-canceled';
+                case 'Refunded': return 'status-refunded';
+                case 'Open': return 'bg-blue-500 text-blue-900';
+                case 'Answered': return 'bg-indigo-500 text-indigo-900';
+                case 'Closed': return 'bg-gray-500 text-gray-900';
+                default: return 'bg-gray-500 text-gray-900';
+            }
+        }
+
+        // --- UI Element References ---
+        const authContainer = document.getElementById('auth-container');
+        const authTitle = document.getElementById('auth-title');
+        const loginForm = document.getElementById('login-form');
+        const registerForm = document.getElementById('register-form');
+        const resetPasswordForm = document.getElementById('reset-password-form');
+        const authMessage = document.getElementById('auth-message');
+        const dashboardContent = document.getElementById('dashboard-content');
+        const userDisplayName = document.getElementById('user-display-name');
+        const sidebar = document.getElementById('sidebar');
+        const mainContent = document.getElementById('main-content');
+        const sidebarOverlay = document.getElementById('sidebar-overlay');
+        const sidebarToggleBtn = document.getElementById('sidebar-toggle-btn');
+        const logoutBtn = document.getElementById('logout-btn');
+
+        const pages = document.querySelectorAll('.page');
+
+        // --- Auth Functions ---
+        function showAuthForm(formId) {
+            loginForm.classList.add('hidden');
+            registerForm.classList.add('hidden');
+            resetPasswordForm.classList.add('hidden');
+            authMessage.textContent = '';
+
+            if (formId === 'register') {
+                registerForm.classList.remove('hidden');
+                authTitle.textContent = 'Register';
+            } else if (formId === 'reset') {
+                resetPasswordForm.classList.remove('hidden');
+                authTitle.textContent = 'Reset Password';
+            } else { // Default to login
+                loginForm.classList.remove('hidden');
+                authTitle.textContent = 'Login';
+            }
+        }
+
+        async function handleLogin(e) {
+            e.preventDefault();
+            const email = loginForm['login-email'].value;
+            const password = loginForm['login-password'].value;
+
+            const user = appData.users.find(u => u.Email === email && u['Password Hash'] === password);
+
+            if (user) {
+                currentUser = {
+                    id: user.ID,
+                    username: user.Username,
+                    email: user.Email,
+                    balance: user.Balance,
+                    role: user.Role,
+                    apiKey: user['API Key'],
+                    status: user.Status
+                };
+                localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                authMessage.textContent = '';
+                renderApp();
+            } else {
+                authMessage.textContent = 'Invalid email or password.';
+                authMessage.classList.add('text-red-500');
+            }
+        }
+
+        async function handleRegistration(e) {
+            e.preventDefault();
+            const username = registerForm['register-username'].value;
+            const email = registerForm['register-email'].value;
+            const password = registerForm['register-password'].value;
+            const confirmPassword = registerForm['register-confirm-password'].value;
+
+            if (password !== confirmPassword) {
+                authMessage.textContent = 'Passwords do not match.';
+                authMessage.classList.add('text-red-500');
+                return;
+            }
+            if (appData.users.some(u => u.Email === email)) {
+                authMessage.textContent = 'Email already registered.';
+                authMessage.classList.add('text-red-500');
+                return;
+            }
+            if (appData.users.some(u => u.Username === username)) {
+                authMessage.textContent = 'Username already taken.';
+                authMessage.classList.add('text-red-500');
+                return;
+            }
+
+            const newUser = {
+                ID: generateUniqueId(),
+                Username: username,
+                Email: email,
+                'Password Hash': password, // In a real app, hash this!
+                Balance: 0,
+                Role: 'User',
+                'API Key': generateUniqueId(),
+                Status: 'Active',
+                'Created At': firebase.firestore.Timestamp.now()
+            };
+
+            // Update appData and then Firestore
+            appData.users.push(newUser);
+            await smmPanelDocRef.update({ users: appData.users });
+
+            authMessage.textContent = 'Registration successful! You can now log in.';
+            authMessage.classList.remove('text-red-500');
+            authMessage.classList.add('text-green-500');
+            showAuthForm('login');
+        }
+
+        async function handlePasswordReset(e) {
+            e.preventDefault();
+            const email = resetPasswordForm['reset-email'].value;
+            const user = appData.users.find(u => u.Email === email);
+
+            if (user) {
+                // In a real app, send a password reset email. Here, simulate success.
+                authMessage.textContent = `A password reset link has been sent to ${email} (simulated).`;
+                authMessage.classList.remove('text-red-500');
+                authMessage.classList.add('text-green-500');
+                showAuthForm('login');
+            } else {
+                authMessage.textContent = 'No account found with that email address.';
+                authMessage.classList.add('text-red-500');
+            }
+        }
+
+        function handleLogout() {
+            currentUser = null;
+            localStorage.removeItem('currentUser');
+            authContainer.classList.remove('hidden');
+            dashboardContent.classList.add('hidden');
+            showAuthForm('login');
+            hideSidebar();
+        }
+
+        // --- Sidebar & Page Navigation ---
+        function showPage(pageId) {
+            pages.forEach(page => page.classList.add('hidden'));
+            document.getElementById(`page-${pageId}`).classList.remove('hidden');
+
+            // Update active state in sidebar
+            document.querySelectorAll('#sidebar nav a').forEach(link => {
+                link.classList.remove('bg-gray-700');
+            });
+            const activeLink = document.querySelector(`#sidebar nav a[data-page="${pageId}"]`);
+            if (activeLink) {
+                activeLink.classList.add('bg-gray-700');
+            }
+
+            if (window.innerWidth < 1024) { // Hide sidebar on mobile after navigation
+                hideSidebar();
+            }
+            window.scrollTo(0, 0); // Scroll to top on page change
+        }
+
+        function toggleSidebar() {
+            sidebar.classList.toggle('hidden');
+            mainContent.classList.toggle('ml-64');
+            mainContent.classList.toggle('full-width');
+            sidebarOverlay.classList.toggle('hidden');
+        }
+
+        function hideSidebar() {
+            sidebar.classList.add('hidden');
+            mainContent.classList.add('full-width');
+            mainContent.classList.remove('ml-64');
+            sidebarOverlay.classList.add('hidden');
+        }
+
+        // --- Render Functions (called on data update) ---
+        function renderDashboard() {
+            if (!currentUser) return;
+
+            userDisplayName.textContent = currentUser.username;
+            document.getElementById('dashboard-balance').textContent = formatCurrency(currentUser.balance);
+
+            const userOrders = appData.orders.filter(order => order['User ID'] === currentUser.id);
+            const totalSpent = userOrders.reduce((sum, order) => sum + order.Charge, 0);
+            const openTickets = appData.tickets.filter(ticket => ticket['User ID'] === currentUser.id && ticket.Status !== 'Closed').length;
+
+            document.getElementById('dashboard-total-spent').textContent = formatCurrency(totalSpent);
+            document.getElementById('dashboard-total-orders').textContent = userOrders.length;
+            document.getElementById('dashboard-open-tickets').textContent = openTickets;
+
+            const recentOrdersBody = document.getElementById('dashboard-recent-orders-body');
+            recentOrdersBody.innerHTML = '';
+            if (userOrders.length === 0) {
+                recentOrdersBody.innerHTML = '<tr><td colspan="7" class="table-row text-center text-gray-400">No recent orders.</td></tr>';
+            } else {
+                // Display latest 5 orders
+                userOrders.sort((a, b) => b.CreatedAt.toMillis() - a.CreatedAt.toMillis()).slice(0, 5).forEach(order => {
+                    const service = appData.services.find(s => s['Service ID'] === order['Service ID']);
+                    const row = `
+                        <tr class="table-row">
+                            <td>#${order['Order ID'].substring(0, 8)}</td>
+                            <td>${service ? service['Service Name'] : 'N/A'}</td>
+                            <td><a href="${order.Link}" target="_blank" class="text-blue-400 hover:underline">${order.Link.length > 30 ? order.Link.substring(0, 27) + '...' : order.Link}</a></td>
+                            <td>${order.Quantity}</td>
+                            <td>${formatCurrency(order.Charge)}</td>
+                            <td><span class="badge ${getStatusBadgeClass(order.Status)}">${order.Status}</span></td>
+                            <td>${formatDate(order.CreatedAt)}</td>
+                        </tr>
+                    `;
+                    recentOrdersBody.innerHTML += row;
+                });
+            }
+        }
+
+        function renderNewOrderPage() {
+            const categorySelect = document.getElementById('category-select');
+            const serviceSelect = document.getElementById('service-select');
+            const serviceDetails = document.getElementById('service-details');
+            const serviceDescription = document.getElementById('service-description');
+            const serviceMinMax = document.getElementById('service-min-max');
+            const serviceRatePer1000 = document.getElementById('service-rate-per-1000');
+            const orderQuantityInput = document.getElementById('order-quantity');
+            const quantityMinSpan = document.getElementById('quantity-min');
+            const quantityMaxSpan = document.getElementById('quantity-max');
+            const totalChargeSpan = document.getElementById('total-charge');
+            const orderCustomCommentsGroup = document.getElementById('order-custom-comments-group');
+            const orderSubscriptionGroup = document.getElementById('order-subscription-group');
+            const orderQuantityGroup = document.getElementById('order-quantity-group');
+
+            categorySelect.innerHTML = '<option value="">Select a Category</option>';
+            appData.categories.forEach(category => {
+                categorySelect.innerHTML += `<option value="${category['Category ID']}">${category['Category Name']}</option>`;
+            });
+
+            serviceSelect.innerHTML = '<option value="">Select a Service</option>';
+            serviceSelect.disabled = true;
+            serviceDetails.classList.add('hidden');
+            orderCustomCommentsGroup.classList.add('hidden');
+            orderSubscriptionGroup.classList.add('hidden');
+            orderQuantityGroup.classList.remove('hidden'); // Ensure quantity input is visible by default
+            orderQuantityInput.value = '';
+            totalChargeSpan.textContent = formatCurrency(0);
+
+            categorySelect.onchange = () => {
+                const selectedCategoryId = categorySelect.value;
+                serviceSelect.innerHTML = '<option value="">Select a Service</option>';
+                serviceSelect.disabled = !selectedCategoryId;
+                serviceDetails.classList.add('hidden');
+                orderCustomCommentsGroup.classList.add('hidden');
+                orderSubscriptionGroup.classList.add('hidden');
+                orderQuantityGroup.classList.remove('hidden');
+                orderQuantityInput.value = '';
+                totalChargeSpan.textContent = formatCurrency(0);
+
+                if (selectedCategoryId) {
+                    const servicesInCategory = appData.services.filter(s => s['Category ID'] === selectedCategoryId);
+                    servicesInCategory.forEach(service => {
+                        serviceSelect.innerHTML += `<option value="${service['Service ID']}">${service['Service Name']}</option>`;
+                    });
+                }
+            };
+
+            serviceSelect.onchange = () => {
+                const selectedServiceId = serviceSelect.value;
+                const service = appData.services.find(s => s['Service ID'] === selectedServiceId);
+
+                if (service) {
+                    serviceDetails.classList.remove('hidden');
+                    serviceDescription.textContent = service.Description;
+                    serviceMinMax.textContent = `${service['Min Order']} / ${service['Max Order']}`;
+                    serviceRatePer1000.textContent = service['Rate per 1000'].toFixed(2);
+                    orderQuantityInput.min = service['Min Order'];
+                    orderQuantityInput.max = service['Max Order'];
+                    quantityMinSpan.textContent = service['Min Order'];
+                    quantityMaxSpan.textContent = service['Max Order'];
+
+                    // Show/hide specific input groups based on service type
+                    orderCustomCommentsGroup.classList.add('hidden');
+                    orderSubscriptionGroup.classList.add('hidden');
+                    orderQuantityGroup.classList.remove('hidden');
+
+                    if (service.Type === 'Custom Comments') {
+                        orderCustomCommentsGroup.classList.remove('hidden');
+                        orderQuantityGroup.classList.add('hidden'); // Quantity derived from comments
+                    } else if (service.Type === 'Subscriptions') {
+                        orderSubscriptionGroup.classList.remove('hidden');
+                    }
+
+                    // Reset quantity and recalculate
+                    orderQuantityInput.value = service['Min Order'] || 1;
+                    calculateTotalCharge();
+                } else {
+                    serviceDetails.classList.add('hidden');
+                    orderCustomCommentsGroup.classList.add('hidden');
+                    orderSubscriptionGroup.classList.add('hidden');
+                    orderQuantityGroup.classList.remove('hidden');
+                    orderQuantityInput.value = '';
+                    totalChargeSpan.textContent = formatCurrency(0);
+                }
+            };
+
+            orderQuantityInput.oninput = calculateTotalCharge;
+            document.getElementById('order-custom-comments').oninput = calculateTotalCharge;
+
+            function calculateTotalCharge() {
+                const selectedServiceId = serviceSelect.value;
+                const service = appData.services.find(s => s['Service ID'] === selectedServiceId);
+                let quantity = 0;
+                let charge = 0;
+
+                if (service) {
+                    if (service.Type === 'Custom Comments') {
+                        const comments = document.getElementById('order-custom-comments').value.split('\n').filter(c => c.trim() !== '');
+                        quantity = comments.length;
+                        charge = (quantity * service['Rate per 1000']) / 1000;
+                    } else {
+                        quantity = parseInt(orderQuantityInput.value, 10);
+                        if (isNaN(quantity) || quantity < service['Min Order']) {
+                            quantity = service['Min Order'] || 0;
+                            orderQuantityInput.value = quantity;
+                        } else if (quantity > service['Max Order']) {
+                            quantity = service['Max Order'] || 0;
+                            orderQuantityInput.value = quantity;
+                        }
+                        charge = (quantity * service['Rate per 1000']) / 1000;
+                    }
+                }
+                totalChargeSpan.textContent = formatCurrency(charge);
+            }
+
+            document.getElementById('new-order-form').onsubmit = async (e) => {
+                e.preventDefault();
+                if (!currentUser) {
+                    alert('Please log in to place an order.');
+                    return;
+                }
+
+                const selectedServiceId = serviceSelect.value;
+                const service = appData.services.find(s => s['Service ID'] === selectedServiceId);
+
+                if (!service) {
+                    alert('Please select a valid service.');
+                    return;
+                }
+
+                let quantity;
+                let comments = null;
+                if (service.Type === 'Custom Comments') {
+                    comments = document.getElementById('order-custom-comments').value.split('\n').filter(c => c.trim() !== '');
+                    quantity = comments.length;
+                    if (quantity === 0) {
+                        alert('Please enter some comments.');
+                        return;
+                    }
+                } else {
+                    quantity = parseInt(orderQuantityInput.value, 10);
+                    if (isNaN(quantity) || quantity < service['Min Order'] || quantity > service['Max Order']) {
+                        alert(`Please enter a quantity between ${service['Min Order']} and ${service['Max Order']}.`);
+                        return;
+                    }
+                }
+
+                const totalCharge = (quantity * service['Rate per 1000']) / 1000;
+
+                if (currentUser.balance < totalCharge) {
+                    alert('Insufficient balance. Please add funds.');
+                    return;
+                }
+
+                const newOrder = {
+                    'Order ID': generateUniqueId(),
+                    'User ID': currentUser.id,
+                    'Service ID': selectedServiceId,
+                    Link: document.getElementById('order-link').value,
+                    Quantity: quantity,
+                    Charge: totalCharge,
+                    Status: 'Pending',
+                    'API Order ID': '', // This would be populated by a real API provider
+                    CreatedAt: firebase.firestore.Timestamp.now(),
+                    Comments: comments // Only for custom comments type
+                };
+
+                // Deduct balance and add order
+                currentUser.balance -= totalCharge;
+                const userIndex = appData.users.findIndex(u => u.ID === currentUser.id);
+                if (userIndex !== -1) {
+                    appData.users[userIndex].Balance = currentUser.balance;
+                }
+                localStorage.setItem('currentUser', JSON.stringify(currentUser)); // Update local storage
+
+                appData.orders.push(newOrder);
+
+                await smmPanelDocRef.update({
+                    users: appData.users,
+                    orders: appData.orders
+                });
+
+                alert(`Order placed successfully! Total charge: ${formatCurrency(totalCharge)}. Your new balance is ${formatCurrency(currentUser.balance)}.`);
+                e.target.reset(); // Clear form
+                serviceSelect.value = '';
+                categorySelect.value = '';
+                serviceSelect.disabled = true;
+                serviceDetails.classList.add('hidden');
+                orderCustomCommentsGroup.classList.add('hidden');
+                orderSubscriptionGroup.classList.add('hidden');
+                orderQuantityGroup.classList.remove('hidden');
+                totalChargeSpan.textContent = formatCurrency(0);
+                showPage('dashboard'); // Redirect to dashboard
+            };
+        }
+
+        function renderMassOrderPage() {
+            document.getElementById('mass-order-form').onsubmit = async (e) => {
+                e.preventDefault();
+                if (!currentUser) {
+                    alert('Please log in to place mass orders.');
+                    return;
+                }
+
+                const massOrderTextarea = document.getElementById('mass-order-textarea');
+                const massOrdersRaw = massOrderTextarea.value.trim().split('\n').filter(line => line.trim() !== '');
+                const massOrderMessage = document.getElementById('mass-order-message');
+                massOrderMessage.textContent = '';
+                massOrderMessage.classList.remove('text-green-500', 'text-red-500');
+
+                if (massOrdersRaw.length === 0) {
+                    massOrderMessage.textContent = 'Please enter orders in the textarea.';
+                    massOrderMessage.classList.add('text-red-500');
+                    return;
+                }
+
+                let totalMassCharge = 0;
+                const newMassOrders = [];
+                const errors = [];
+
+                for (const line of massOrdersRaw) {
+                    const parts = line.split('|').map(p => p.trim());
+                    if (parts.length !== 3) {
+                        errors.push(`Invalid format for line: "${line}". Expected "Service_ID | Link | Quantity".`);
+                        continue;
+                    }
+
+                    const serviceId = parts[0];
+                    const link = parts[1];
+                    const quantity = parseInt(parts[2], 10);
+
+                    const service = appData.services.find(s => s['Service ID'] === serviceId);
+
+                    if (!service) {
+                        errors.push(`Service ID "${serviceId}" not found for line: "${line}".`);
+                        continue;
+                    }
+                    if (isNaN(quantity) || quantity < service['Min Order'] || quantity > service['Max Order']) {
+                        errors.push(`Invalid quantity "${quantity}" for service "${serviceId}" (min: ${service['Min Order']}, max: ${service['Max Order']}) for line: "${line}".`);
+                        continue;
+                    }
+
+                    const charge = (quantity * service['Rate per 1000']) / 1000;
+                    totalMassCharge += charge;
+
+                    newMassOrders.push({
+                        'Order ID': generateUniqueId(),
+                        'User ID': currentUser.id,
+                        'Service ID': serviceId,
+                        Link: link,
+                        Quantity: quantity,
+                        Charge: charge,
+                        Status: 'Pending',
+                        'API Order ID': '',
+                        CreatedAt: firebase.firestore.Timestamp.now()
+                    });
+                }
+
+                if (errors.length > 0) {
+                    massOrderMessage.innerHTML = `<p class="font-bold text-red-500">Errors encountered:</p><ul>${errors.map(err => `<li>${err}</li>`).join('')}</ul>`;
+                    return;
+                }
+
+                if (currentUser.balance < totalMassCharge) {
+                    massOrderMessage.textContent = `Insufficient balance. Total charge for mass orders: ${formatCurrency(totalMassCharge)}. Your balance: ${formatCurrency(currentUser.balance)}.`;
+                    massOrderMessage.classList.add('text-red-500');
+                    return;
+                }
+
+                // Deduct balance
+                currentUser.balance -= totalMassCharge;
+                const userIndex = appData.users.findIndex(u => u.ID === currentUser.id);
+                if (userIndex !== -1) {
+                    appData.users[userIndex].Balance = currentUser.balance;
+                }
+                localStorage.setItem('currentUser', JSON.stringify(currentUser)); // Update local storage
+
+                // Add new orders
+                appData.orders.push(...newMassOrders);
+
+                await smmPanelDocRef.update({
+                    users: appData.users,
+                    orders: appData.orders
+                });
+
+                massOrderMessage.textContent = `Successfully processed ${newMassOrders.length} orders! Total charge: ${formatCurrency(totalMassCharge)}. Your new balance is ${formatCurrency(currentUser.balance)}.`;
+                massOrderMessage.classList.add('text-green-500');
+                massOrderTextarea.value = '';
+            };
+        }
+
+        let currentPage = 1;
+        const itemsPerPage = 10;
+        let filteredOrders = [];
+
+        function renderOrderHistory() {
+            if (!currentUser) return;
+
+            const orderHistoryBody = document.getElementById('order-history-body');
+            const orderSearch = document.getElementById('order-search');
+            const orderStatusFilter = document.getElementById('order-status-filter');
+            const currentPageSpan = document.getElementById('current-page');
+            const totalPagesSpan = document.getElementById('total-pages');
+            const prevPageBtn = document.getElementById('prev-page');
+            const nextPageBtn = document.getElementById('next-page');
+
+            const allUserOrders = appData.orders.filter(order => order['User ID'] === currentUser.id);
+
+            function applyFilters() {
+                const searchTerm = orderSearch.value.toLowerCase();
+                const statusFilter = orderStatusFilter.value;
+
+                filteredOrders = allUserOrders.filter(order => {
+                    const matchesSearch = order['Order ID'].toLowerCase().includes(searchTerm) ||
+                                          order.Link.toLowerCase().includes(searchTerm) ||
+                                          (appData.services.find(s => s['Service ID'] === order['Service ID'])?.['Service Name'] || '').toLowerCase().includes(searchTerm);
+                    const matchesStatus = statusFilter === '' || order.Status === statusFilter;
+                    return matchesSearch && matchesStatus;
+                }).sort((a, b) => b.CreatedAt.toMillis() - a.CreatedAt.toMillis()); // Sort by most recent
+                currentPage = 1; // Reset to first page on filter change
+                renderOrdersTable();
+            }
+
+            function renderOrdersTable() {
+                orderHistoryBody.innerHTML = '';
+                const totalPages = Math.ceil(filteredOrders.length / itemsPerPage);
+                totalPagesSpan.textContent = totalPages > 0 ? totalPages : 1;
+                currentPageSpan.textContent = currentPage;
+
+                prevPageBtn.disabled = currentPage === 1;
+                nextPageBtn.disabled = currentPage === totalPages || totalPages === 0;
+
+                const start = (currentPage - 1) * itemsPerPage;
+                const end = start + itemsPerPage;
+                const paginatedOrders = filteredOrders.slice(start, end);
+
+                if (paginatedOrders.length === 0) {
+                    orderHistoryBody.innerHTML = '<tr><td colspan="8" class="table-row text-center text-gray-400">No orders found matching criteria.</td></tr>';
+                } else {
+                    paginatedOrders.forEach(order => {
+                        const service = appData.services.find(s => s['Service ID'] === order['Service ID']);
+                        const row = `
+                            <tr class="table-row">
+                                <td>#${order['Order ID'].substring(0, 8)}</td>
+                                <td>${service ? service['Service Name'] : 'N/A'}</td>
+                                <td><a href="${order.Link}" target="_blank" class="text-blue-400 hover:underline">${order.Link.length > 30 ? order.Link.substring(0, 27) + '...' : order.Link}</a></td>
+                                <td>${order.Quantity}</td>
+                                <td>${formatCurrency(order.Charge)}</td>
+                                <td><span class="badge ${getStatusBadgeClass(order.Status)}">${order.Status}</span></td>
+                                <td>${order['API Order ID'] || 'N/A'}</td>
+                                <td>${formatDate(order.CreatedAt)}</td>
+                            </tr>
+                        `;
+                        orderHistoryBody.innerHTML += row;
+                    });
+                }
+            }
+
+            orderSearch.oninput = applyFilters;
+            orderStatusFilter.onchange = applyFilters;
+            document.getElementById('reset-filters').onclick = () => {
+                orderSearch.value = '';
+                orderStatusFilter.value = '';
+                applyFilters();
+            };
+            prevPageBtn.onclick = () => {
+                if (currentPage > 1) {
+                    currentPage--;
+                    renderOrdersTable();
+                }
+            };
+            nextPageBtn.onclick = () => {
+                const totalPages = Math.ceil(filteredOrders.length / itemsPerPage);
+                if (currentPage < totalPages) {
+                    currentPage++;
+                    renderOrdersTable();
+                }
+            };
+
+            applyFilters(); // Initial render
+        }
+
+        function renderAddFundsPage() {
+            if (!currentUser) return;
+
+            // Stripe Form (Simulated)
+            document.getElementById('stripe-payment-form').onsubmit = async (e) => {
+                e.preventDefault();
+                const amount = parseFloat(document.getElementById('stripe-amount').value);
+                if (isNaN(amount) || amount <= 0) {
+                    alert('Please enter a valid amount.');
+                    return;
+                }
+
+                // Simulate Stripe payment success
+                await processAddFunds(amount, 'Stripe', 'Completed');
+                alert(`Successfully added ${formatCurrency(amount)} via Stripe (simulated). Your new balance is ${formatCurrency(currentUser.balance)}.`);
+                e.target.reset();
+                showPage('dashboard');
+            };
+
+            // PayPal Form (Simulated)
+            document.getElementById('paypal-payment-form').onsubmit = async (e) => {
+                e.preventDefault();
+                const amount = parseFloat(document.getElementById('paypal-amount').value);
+                if (isNaN(amount) || amount <= 0) {
+                    alert('Please enter a valid amount.');
+                    return;
+                }
+
+                // Simulate PayPal payment success
+                await processAddFunds(amount, 'PayPal', 'Completed');
+                alert(`Successfully added ${formatCurrency(amount)} via PayPal (simulated). Your new balance is ${formatCurrency(currentUser.balance)}.`);
+                e.target.reset();
+                showPage('dashboard');
+            };
+
+            // Manual Payment Form
+            document.getElementById('manual-payment-form').onsubmit = async (e) => {
+                e.preventDefault();
+                const amount = parseFloat(document.getElementById('manual-amount').value);
+                const method = document.getElementById('manual-method').value;
+                const transactionId = document.getElementById('manual-transaction-id').value;
+                const notes = document.getElementById('manual-notes').value;
+
+                if (isNaN(amount) || amount <= 0) {
+                    alert('Please enter a valid amount.');
+                    return;
+                }
+                if (!method || !transactionId) {
+                    alert('Payment Method and Transaction ID are required.');
+                    return;
+                }
+
+                // For manual payments, status is pending for admin review
+                await processAddFunds(amount, method, 'Pending', transactionId, notes);
+                alert(`Manual payment of ${formatCurrency(amount)} submitted. It will be added to your balance after admin verification.`);
+                e.target.reset();
+                showPage('dashboard');
+            };
+
+            async function processAddFunds(amount, method, status, transactionRef = '', notes = '') {
+                const newTransaction = {
+                    'Transaction ID': generateUniqueId(),
+                    'User ID': currentUser.id,
+                    'Payment Method': method,
+                    Amount: amount,
+                    Status: status, // 'Completed' or 'Pending'
+                    Date: firebase.firestore.Timestamp.now(),
+                    'Transaction Reference': transactionRef,
+                    Notes: notes
+                };
+
+                appData.transactions.push(newTransaction);
+
+                if (status === 'Completed') {
+                    currentUser.balance += amount;
+                    const userIndex = appData.users.findIndex(u => u.ID === currentUser.id);
+                    if (userIndex !== -1) {
+                        appData.users[userIndex].Balance = currentUser.balance;
+                    }
+                    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                }
+
+                await smmPanelDocRef.update({
+                    users: appData.users,
+                    transactions: appData.transactions
+                });
+            }
+        }
+
+        let currentTicketId = null; // Track the ticket currently open in modal
+
+        function renderSupportTicketsPage() {
+            if (!currentUser) return;
+
+            const ticketsList = document.getElementById('tickets-list');
+            const ticketModal = document.getElementById('ticket-modal');
+            const modalTicketId = document.getElementById('modal-ticket-id');
+            const modalTicketSubject = document.getElementById('modal-ticket-subject');
+            const modalTicketMessages = document.getElementById('modal-ticket-messages');
+            const closeTicketModalBtn = document.getElementById('close-ticket-modal');
+            const newTicketForm = document.getElementById('new-ticket-form');
+            const ticketReplyForm = document.getElementById('ticket-reply-form');
+            const replyMessageInput = document.getElementById('reply-message');
+
+            // Render existing tickets
+            function updateTicketsList() {
+                ticketsList.innerHTML = '';
+                const userTickets = appData.tickets
+                    .filter(ticket => ticket['User ID'] === currentUser.id)
+                    .sort((a, b) => b.Timestamp.toMillis() - a.Timestamp.toMillis()); // Latest first
+
+                if (userTickets.length === 0) {
+                    ticketsList.innerHTML = '<p class="text-gray-400 text-center py-4">No tickets found.</p>';
+                    return;
+                }
+
+                userTickets.forEach(ticket => {
+                    const latestReply = ticket.Replies && ticket.Replies.length > 0 ? ticket.Replies[ticket.Replies.length - 1] : null;
+                    const latestMessage = latestReply ? (latestReply.UserID === currentUser.id ? 'You: ' : 'Admin: ') + latestReply.Message : ticket.Message;
+
+                    const ticketDiv = document.createElement('div');
+                    ticketDiv.className = 'card cursor-pointer hover:bg-gray-700 transition-colors duration-200';
+                    ticketDiv.innerHTML = `
+                        <div class="flex justify-between items-center mb-2">
+                            <h3 class="text-xl font-semibold text-gray-200">#${ticket['Ticket ID'].substring(0, 8)} - ${ticket.Subject}</h3>
+                            <span class="badge ${getStatusBadgeClass(ticket.Status)}">${ticket.Status}</span>
+                        </div>
+                        <p class="text-gray-400 text-sm mb-2">${latestMessage.length > 100 ? latestMessage.substring(0, 97) + '...' : latestMessage}</p>
+                        <p class="text-xs text-gray-500">Last update: ${formatDate(latestReply ? latestReply.Timestamp : ticket.Timestamp)}</p>
+                    `;
+                    ticketDiv.onclick = () => openTicketModal(ticket);
+                    ticketsList.appendChild(ticketDiv);
+                });
+            }
+
+            function openTicketModal(ticket) {
+                currentTicketId = ticket['Ticket ID'];
+                modalTicketId.textContent = ticket['Ticket ID'].substring(0, 8);
+                modalTicketSubject.textContent = ticket.Subject;
+                modalTicketMessages.innerHTML = '';
+
+                // Original message
+                modalTicketMessages.innerHTML += `
+                    <div class="flex items-start">
+                        <div class="flex-shrink-0 w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-sm font-bold mr-3">U</div>
+                        <div class="bg-gray-600 p-3 rounded-lg max-w-lg">
+                            <p class="text-sm font-semibold text-gray-100">${ticket.Message}</p>
+                            <p class="text-xs text-gray-400 mt-1">${formatDate(ticket.Timestamp)}</p>
+                        </div>
+                    </div>
+                `;
+
+                // Replies
+                if (ticket.Replies && ticket.Replies.length > 0) {
+                    ticket.Replies.forEach(reply => {
+                        const isUser = reply.UserID === currentUser.id;
+                        modalTicketMessages.innerHTML += `
+                            <div class="flex ${isUser ? 'justify-end' : 'items-start'}">
+                                ${!isUser ? '<div class="flex-shrink-0 w-8 h-8 rounded-full bg-green-600 flex items-center justify-center text-white text-sm font-bold mr-3">A</div>' : ''}
+                                <div class="${isUser ? 'bg-blue-600' : 'bg-gray-600'} p-3 rounded-lg max-w-lg">
+                                    <p class="text-sm font-semibold text-gray-100">${reply.Message}</p>
+                                    <p class="text-xs text-gray-300 mt-1">${formatDate(reply.Timestamp)}</p>
+                                </div>
+                                ${isUser ? '<div class="flex-shrink-0 w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-sm font-bold ml-3">U</div>' : ''}
+                            </div>
+                        `;
+                    });
+                }
+                modalTicketMessages.scrollTop = modalTicketMessages.scrollHeight; // Scroll to bottom
+                ticketModal.classList.remove('hidden');
+            }
+
+            closeTicketModalBtn.onclick = () => {
+                ticketModal.classList.add('hidden');
+                currentTicketId = null;
+            };
+
+            // New ticket submission
+            newTicketForm.onsubmit = async (e) => {
+                e.preventDefault();
+                const subject = document.getElementById('ticket-subject').value;
+                const message = document.getElementById('ticket-message').value;
+
+                const newTicket = {
+                    'Ticket ID': generateUniqueId(),
+                    'User ID': currentUser.id,
+                    Subject: subject,
+                    Message: message,
+                    Status: 'Open',
+                    Timestamp: firebase.firestore.Timestamp.now(),
+                    Replies: []
+                };
+
+                appData.tickets.push(newTicket);
+                await smmPanelDocRef.update({ tickets: appData.tickets });
+
+                alert('Ticket submitted successfully!');
+                e.target.reset();
+                updateTicketsList(); // Refresh list
+            };
+
+            // Reply to ticket submission
+            ticketReplyForm.onsubmit = async (e) => {
+                e.preventDefault();
+                const replyMessage = replyMessageInput.value.trim();
+                if (!replyMessage || !currentTicketId) return;
+
+                const ticketIndex = appData.tickets.findIndex(t => t['Ticket ID'] === currentTicketId);
+                if (ticketIndex !== -1) {
+                    const updatedTicket = { ...appData.tickets[ticketIndex] };
+                    if (!updatedTicket.Replies) {
+                        updatedTicket.Replies = [];
+                    }
+                    updatedTicket.Replies.push({
+                        UserID: currentUser.id, // Or 'Admin ID' if responding as admin
+                        Message: replyMessage,
+                        Timestamp: firebase.firestore.Timestamp.now()
+                    });
+                    updatedTicket.Status = 'Answered'; // User replied, so it's answered
+
+                    appData.tickets[ticketIndex] = updatedTicket;
+                    await smmPanelDocRef.update({ tickets: appData.tickets });
+
+                    replyMessageInput.value = '';
+                    openTicketModal(updatedTicket); // Re-render modal to show new reply
+                    updateTicketsList(); // Refresh list to update status/last update
+                }
+            };
+
+            updateTicketsList(); // Initial render
+        }
+
+        function renderApiDocumentationPage() {
+            if (!currentUser) return;
+            const apiKeyDisplay = document.getElementById('api-key-display');
+            const regenerateApiKeyBtn = document.getElementById('regenerate-api-key-btn');
+
+            apiKeyDisplay.textContent = currentUser.apiKey;
+
+            regenerateApiKeyBtn.onclick = async () => {
+                if (confirm('Are you sure you want to regenerate your API key? The old key will stop working immediately.')) {
+                    const newApiKey = generateUniqueId();
+                    currentUser.apiKey = newApiKey;
+                    const userIndex = appData.users.findIndex(u => u.ID === currentUser.id);
+                    if (userIndex !== -1) {
+                        appData.users[userIndex]['API Key'] = newApiKey;
+                    }
+                    localStorage.setItem('currentUser', JSON.stringify(currentUser)); // Update local storage
+
+                    await smmPanelDocRef.update({ users: appData.users });
+                    alert('API Key regenerated successfully!');
+                    apiKeyDisplay.textContent = newApiKey; // Update UI immediately
+                }
+            };
+        }
+
+
+        // --- Main Application Render Function ---
+        function renderApp() {
+            currentUser = JSON.parse(localStorage.getItem('currentUser'));
+
+            if (currentUser) {
+                authContainer.classList.add('hidden');
+                dashboardContent.classList.remove('hidden');
+                document.getElementById('user-display-name').textContent = currentUser.username;
+                showPage('dashboard'); // Default to dashboard on login
+
+                // Update currentUser balance and API key from fetched data
+                const actualUser = appData.users.find(u => u.ID === currentUser.id);
+                if (actualUser) {
+                    currentUser.balance = actualUser.Balance;
+                    currentUser.apiKey = actualUser['API Key'];
+                    localStorage.setItem('currentUser', JSON.stringify(currentUser)); // Sync local storage
+                }
+
+                // Initial render of active page
+                const activePageElement = document.querySelector('.page:not(.hidden)');
+                const activePageId = activePageElement ? activePageElement.id.replace('page-', '') : 'dashboard';
+                // Call render function for the currently active page
+                if (activePageId === 'dashboard') renderDashboard();
+                if (activePageId === 'new-order') renderNewOrderPage();
+                if (activePageId === 'mass-order') renderMassOrderPage();
+                if (activePageId === 'order-history') renderOrderHistory();
+                if (activePageId === 'add-funds') renderAddFundsPage();
+                if (activePageId === 'support-tickets') renderSupportTicketsPage();
+                if (activePageId === 'api-documentation') renderApiDocumentationPage();
+
+            } else {
+                authContainer.classList.remove('hidden');
+                dashboardContent.classList.add('hidden');
+                showAuthForm('login');
+            }
+        }
+
+        // --- Event Listeners ---
+        loginForm.addEventListener('submit', handleLogin);
+        registerForm.addEventListener('submit', handleRegistration);
+        resetPasswordForm.addEventListener('submit', handlePasswordReset);
+        logoutBtn.addEventListener('click', handleLogout);
+
+        document.getElementById('show-register').addEventListener('click', (e) => { e.preventDefault(); showAuthForm('register'); });
+        document.getElementById('show-login-from-register').addEventListener('click', (e) => { e.preventDefault(); showAuthForm('login'); });
+        document.getElementById('show-reset').addEventListener('click', (e) => { e.preventDefault(); showAuthForm('reset'); });
+        document.getElementById('show-login-from-reset').addEventListener('click', (e) => { e.preventDefault(); showAuthForm('login'); });
+
+        // Sidebar navigation clicks
+        document.querySelectorAll('#sidebar nav a').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (currentUser) {
+                    const pageId = e.currentTarget.dataset.page;
+                    showPage(pageId);
+                    // Rerender the specific page content based on its ID
+                    if (pageId === 'dashboard') renderDashboard();
+                    else if (pageId === 'new-order') renderNewOrderPage();
+                    else if (pageId === 'mass-order') renderMassOrderPage();
+                    else if (pageId === 'order-history') renderOrderHistory();
+                    else if (pageId === 'add-funds') renderAddFundsPage();
+                    else if (pageId === 'support-tickets') renderSupportTicketsPage();
+                    else if (pageId === 'api-documentation') renderApiDocumentationPage();
+                    // Add other page render calls here if needed
+                } else {
+                    alert('Please log in to access this feature.');
+                    showAuthForm('login');
+                }
+            });
+        });
+
+        // Mobile sidebar toggle
+        sidebarToggleBtn.addEventListener('click', toggleSidebar);
+        sidebarOverlay.addEventListener('click', hideSidebar);
+
+        // Resize observer for responsive sidebar
+        const resizeObserver = new ResizeObserver(entries => {
+            if (window.innerWidth >= 1024) { // Desktop
+                sidebar.classList.remove('hidden');
+                mainContent.classList.remove('full-width');
+                mainContent.classList.add('ml-64');
+                sidebarOverlay.classList.add('hidden');
+            } else { // Mobile
+                sidebar.classList.add('hidden');
+                mainContent.classList.add('full-width');
+                mainContent.classList.remove('ml-64');
+            }
+        });
+        resizeObserver.observe(document.body); // Observe body for width changes
+
+
+        // --- Initialize Data with onSnapshot ---
+        smmPanelDocRef.onSnapshot(doc => {
+            if (doc.exists) {
+                appData = doc.data();
+                // Ensure default empty arrays if a field is missing (first run)
+                appData.users = appData.users || [];
+                appData.orders = appData.orders || [];
+                appData.categories = appData.categories || [];
+                appData.services = appData.services || [];
+                appData.transactions = appData.transactions || [];
+                appData.tickets = appData.tickets || [];
+
+                // Initialize some dummy data if the document is essentially empty
+                if (appData.users.length === 0) {
+                    console.log("Initializing dummy data...");
+                    appData.users = [{
+                        ID: 'user123', Username: 'demo', Email: 'demo@example.com', 'Password Hash': 'demo',
+                        Balance: 100.50, Role: 'User', 'API Key': 'DEMO-API-KEY-12345', Status: 'Active', 'Created At': firebase.firestore.Timestamp.now()
+                    },
+                    {
+                        ID: 'admin456', Username: 'admin', Email: 'admin@example.com', 'Password Hash': 'admin',
+                        Balance: 9999.00, Role: 'Admin', 'API Key': 'ADMIN-API-KEY-67890', Status: 'Active', 'Created At': firebase.firestore.Timestamp.now()
+                    }];
+                    appData.categories = [
+                        { 'Category ID': 'cat_instagram', 'Category Name': 'Instagram' },
+                        { 'Category ID': 'cat_tiktok', 'Category Name': 'TikTok' },
+                        { 'Category ID': 'cat_youtube', 'Category Name': 'YouTube' }
+                    ];
+                    appData.services = [
+                        { 'Service ID': 'svc_ig_likes', 'Category ID': 'cat_instagram', 'Service Name': 'Instagram Likes [High Quality]', Type: 'Default', 'Rate per 1000': 0.80, 'Min Order': 100, 'Max Order': 50000, 'API Provider ID': 'p1', 'API Service ID': 's1', Description: 'High quality Instagram likes delivered fast.' },
+                        { 'Service ID': 'svc_ig_followers', 'Category ID': 'cat_instagram', 'Service Name': 'Instagram Followers [Real]', Type: 'Default', 'Rate per 1000': 3.50, 'Min Order': 50, 'Max Order': 10000, 'API Provider ID': 'p1', 'API Service ID': 's2', Description: 'Real Instagram followers, gradual delivery for safety.' },
+                        { 'Service ID': 'svc_ig_comments', 'Category ID': 'cat_instagram', 'Service Name': 'Instagram Custom Comments', Type: 'Custom Comments', 'Rate per 1000': 10.00, 'Min Order': 1, 'Max Order': 100, 'API Provider ID': 'p1', 'API Service ID': 's3', Description: 'Receive custom comments on your Instagram posts. One comment per line.' },
+                        { 'Service ID': 'svc_tiktok_views', 'Category ID': 'cat_tiktok', 'Service Name': 'TikTok Views [Fast]', Type: 'Default', 'Rate per 1000': 0.20, 'Min Order': 1000, 'Max Order': 1000000, 'API Provider ID': 'p2', 'API Service ID': 's4', Description: 'Boost your TikTok videos with millions of views.' },
+                        { 'Service ID': 'svc_yt_subscribers', 'Category ID': 'cat_youtube', 'Service Name': 'YouTube Subscribers [Guaranteed]', Type: 'Default', 'Rate per 1000': 15.00, 'Min Order': 10, 'Max Order': 1000, 'API Provider ID': 'p3', 'API Service ID': 's5', Description: 'Increase your YouTube channel subscribers with a 30-day refill guarantee.' }
+                    ];
+                    appData.orders = [{
+                        'Order ID': 'ord1001', 'User ID': 'user123', 'Service ID': 'svc_ig_likes', Link: 'https://instagram.com/p/abcdef/', Quantity: 500, Charge: 0.40,
+                        Status: 'Completed', 'API Order ID': 'apiord123', CreatedAt: firebase.firestore.Timestamp.fromMillis(Date.now() - 86400000)
+                    },
+                    {
+                        'Order ID': 'ord1002', 'User ID': 'user123', 'Service ID': 'svc_ig_followers', Link: 'https://instagram.com/user/', Quantity: 100, Charge: 0.35,
+                        Status: 'Processing', 'API Order ID': 'apiord124', CreatedAt: firebase.firestore.Timestamp.fromMillis(Date.now() - 3600000)
+                    }];
+                    appData.tickets = [{
+                        'Ticket ID': 'tkt001', 'User ID': 'user123', Subject: 'Order #ord1001 not delivered', Message: 'My order #ord1001 for Instagram likes has not been completed yet. It has been 24 hours.',
+                        Status: 'Open', Timestamp: firebase.firestore.Timestamp.fromMillis(Date.now() - 43200000), Replies: []
+                    }];
+                    // Persist dummy data
+                    smmPanelDocRef.set(appData)
+                        .then(() => console.log("Dummy data initialized and saved to Firestore."))
+                        .catch(error => console.error("Error writing dummy data: ", error));
+                }
+                renderApp(); // Rerender UI based on fresh data
+            } else {
+                console.log("No 'main' document found in 'smm-panel-2_data' collection. Initializing with empty data.");
+                smmPanelDocRef.set({
+                    users: [],
+                    orders: [],
+                    categories: [],
+                    services: [],
+                    transactions: [],
+                    tickets: []
+                }).then(() => {
+                    // After setting, the onSnapshot listener will fire again with the new empty data.
+                    // This creates a loop for dummy data initialization (see above `if (appData.users.length === 0)` block)
+                }).catch(error => console.error("Error creating initial document: ", error));
+            }
+        }, error => {
+            console.error("Firestore onSnapshot error:", error);
+            // Handle error, e.g., show an error message to the user
+            authMessage.textContent = 'Failed to load application data. Please check your internet connection or try again later.';
+            authMessage.classList.add('text-red-500');
+        });
+
+        // Ensure initial render on page load, in case Firebase data takes a moment
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.innerWidth < 1024) { // Hide sidebar on mobile on initial load
+                hideSidebar();
+            } else {
+                mainContent.classList.remove('full-width');
+                mainContent.classList.add('ml-64');
+            }
+            // `renderApp()` is called by `onSnapshot` now, so no need for explicit call here.
+            // If `onSnapshot` fails or takes time, this might lead to a brief empty screen,
+            // but for a single-page app architecture relying on real-time listeners, it's typical.
+            // We could add a loading spinner here if desired.
+        });
+
+    </script>
+</body>
+</html>
